@@ -1,3 +1,5 @@
+import json
+import base64  # NOVO: Importa o módulo base64
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required, current_user
 from models.movimento_bancario_model import MovimentoBancario
@@ -66,10 +68,13 @@ def add_movimento():
     contas = ContaBancaria.get_all_by_user(current_user.id)
     transacoes = TransacaoBancaria.get_all_by_user(current_user.id)
 
-    # NOVO: Prepara os dados das transa\u00e7\u00f5es para serem passados como JSON
-    # Convertendo objetos do modelo para dicion\u00e1rios compat\u00edveis com JSON.
+    # Prepara os dados das transa\u00e7\u00f5es e codifica em Base64
     transacoes_json_data = [
         {'id': t.id, 'transacao': t.transacao, 'tipo': t.tipo} for t in transacoes]
+    transacoes_json_string = json.dumps(transacoes_json_data)
+    transacoes_base64_string = base64.b64encode(
+        # Codifica em Base64
+        transacoes_json_string.encode('utf-8')).decode('utf-8')
 
     # Prepara a data de hoje para o valor predefinido do campo de data
     today_date = date.today().isoformat()  # Formato 'YYYY-MM-DD'
@@ -103,7 +108,7 @@ def add_movimento():
                 return render_template('movimento_bancario/add.html',
                                        contas=contas, transacoes=transacoes,
                                        TIPOS_MOVIMENTO=TIPOS_MOVIMENTO, today_date=today_date,
-                                       transacoes_json_data=transacoes_json_data)
+                                       transacoes_json_data=transacoes_base64_string)  # Passa a string Base64
 
             if (selected_transacao.tipo == 'Cr\u00e9dito' and valor < 0) or \
                (selected_transacao.tipo == 'D\u00e9bito' and valor > 0):
@@ -112,7 +117,7 @@ def add_movimento():
                 return render_template('movimento_bancario/add.html',
                                        contas=contas, transacoes=transacoes,
                                        TIPOS_MOVIMENTO=TIPOS_MOVIMENTO, today_date=today_date,
-                                       transacoes_json_data=transacoes_json_data)
+                                       transacoes_json_data=transacoes_base64_string)  # Passa a string Base64
 
             MovimentoBancario.add(
                 user_id=current_user.id,
@@ -136,7 +141,7 @@ def add_movimento():
     return render_template('movimento_bancario/add.html',
                            contas=contas, transacoes=transacoes,
                            TIPOS_MOVIMENTO=TIPOS_MOVIMENTO, today_date=today_date,
-                           transacoes_json_data=transacoes_json_data)
+                           transacoes_json_data=transacoes_base64_string)  # Passa a string Base64
 
 
 @bp_movimento_bancario.route('/edit/<int:movimento_id>', methods=['GET', 'POST'])
@@ -155,10 +160,13 @@ def edit_movimento(movimento_id):
     contas = ContaBancaria.get_all_by_user(current_user.id)
     transacoes = TransacaoBancaria.get_all_by_user(current_user.id)
 
-    # NOVO: Prepara os dados das transa\u00e7\u00f5es para serem passados como JSON
-    # Convertendo objetos do modelo para dicion\u00e1rios compat\u00edveis com JSON.
+    # Prepara os dados das transa\u00e7\u00f5es e codifica em Base64
     transacoes_json_data = [
         {'id': t.id, 'transacao': t.transacao, 'tipo': t.tipo} for t in transacoes]
+    transacoes_json_string = json.dumps(transacoes_json_data)
+    transacoes_base64_string = base64.b64encode(
+        # Codifica em Base64
+        transacoes_json_string.encode('utf-8')).decode('utf-8')
 
     # Prepara a data do movimento para o valor predefinido do campo de data
     # Garante que a data \u00e9 um objeto date antes de formatar
@@ -194,7 +202,7 @@ def edit_movimento(movimento_id):
                                        movimento=movimento, contas=contas,
                                        transacoes=transacoes, TIPOS_MOVIMENTO=TIPOS_MOVIMENTO,
                                        movimento_date_str=movimento_date_str,
-                                       transacoes_json_data=transacoes_json_data)
+                                       transacoes_json_data=transacoes_base64_string)  # Passa a string Base64
 
             if (selected_transacao.tipo == 'Cr\u00e9dito' and valor < 0) or \
                (selected_transacao.tipo == 'D\u00e9bito' and valor > 0):
@@ -204,7 +212,7 @@ def edit_movimento(movimento_id):
                                        movimento=movimento, contas=contas,
                                        transacoes=transacoes, TIPOS_MOVIMENTO=TIPOS_MOVIMENTO,
                                        movimento_date_str=movimento_date_str,
-                                       transacoes_json_data=transacoes_json_data)
+                                       transacoes_json_data=transacoes_base64_string)  # Passa a string Base64
 
             updated_movimento = MovimentoBancario.update(
                 movimento_id=movimento_id,
@@ -234,10 +242,9 @@ def edit_movimento(movimento_id):
                            movimento=movimento, contas=contas,
                            transacoes=transacoes, TIPOS_MOVIMENTO=TIPOS_MOVIMENTO,
                            movimento_date_str=movimento_date_str,
-                           transacoes_json_data=transacoes_json_data)  # Passa para o template
+                           transacoes_json_data=transacoes_base64_string)  # Passa a string Base64
 
 
-# Revertido para apenas POST
 @bp_movimento_bancario.route('/delete/<int:movimento_id>', methods=['POST'])
 @login_required
 # Garante que o utilizador s\u00f3 deleta os seus pr\u00f3prios movimentos

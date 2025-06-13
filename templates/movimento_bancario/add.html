@@ -6,7 +6,8 @@
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
     <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Novo Movimento Bancário</h2>
     <form method="POST" action="{{ url_for('movimento_bancario.add_movimento') }}"
-        data-transacoes-json="{{ transacoes_json_data | tojson }}"> {# Passa a lista de transações como JSON #}
+        data-transacoes-json="{{ transacoes_json_data | safe }}"> {# ATENÇÃO: Usar | safe para inserir string JSON
+        diretamente #}
         <div class="mb-5">
             <label for="conta_bancaria_id" class="block text-gray-700 text-sm font-medium mb-2">Conta Bancária</label>
             <select id="conta_bancaria_id" name="conta_bancaria_id" required
@@ -38,10 +39,10 @@
         </div>
         <div class="mb-5">
             <label for="valor" class="block text-gray-700 text-sm font-medium mb-2">Valor (R$)</label>
-            <input type="text" id="valor" name="valor" value="0,00" required pattern="^-?[0-9]+([,\.][0-9]{1,2})?$"
-                inputmode="decimal" {# Permite o sinal negativo #}
+            <input type="text" id="valor" name="valor" value="0,00" inputmode="decimal" {# Permite o sinal negativo #}
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                 placeholder="Ex: 150.75 ou -50.00">
+            <p id="valor-validation-message" class="text-red-500 text-xs mt-1 hidden"></p> {# Mensagem de validação #}
         </div>
         <div class="mb-6">
             <label for="tipo_movimento_display" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
@@ -66,7 +67,7 @@
     </form>
 </div>
 
-<!-- Script para restringir a entrada de valores monet\u00e1rios e ajustar tipo de movimento -->
+<!-- Script para validar e ajustar valores e tipo de movimento -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const valorInput = document.getElementById('valor');
@@ -74,99 +75,170 @@
         const tipoMovimentoHidden = document.getElementById('tipo_hidden');
         const transacaoBancariaIdSelect = document.getElementById('transacao_bancaria_id');
         const form = document.querySelector('form');
+        const valorValidationMessage = document.getElementById('valor-validation-message');
 
-        // Pega os dados das transações do atributo data-
-        const transacoesData = JSON.parse(form.getAttribute('data-transacoes-json'));
-        // Cria um mapa para fácil acesso: {id_transacao: {transacao: "nome", tipo: "Crédito/Débito"}}
+        let transacoesData = [];
+        try {
+            const jsonString = form.getAttribute('data-transacoes-json');
+            if (jsonString) {
+                transacoesData = JSON.parse(jsonString.trim()); // Adicionado .trim()
+            }
+        } catch (e) {
+            console.error('Erro ao analisar JSON de transações:', e);
+        }
+
         const transactionTypesMap = {};
         transacoesData.forEach(item => {
             transactionTypesMap[item.id] = { transacao: item.transacao, tipo: item.tipo };
         });
 
+        // Formata um valor numérico para a moeda local (pt-BR)
+        function formatCurrency(value) {
+            if (isNaN(value)) {
+                return '';
+            }
+            return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
 
-        // Fun\u00e7\u00e3o para restringir a entrada a n\u00fameros decimais no formato de moeda (permite , . e -)
-        // e limita a 2 casas decimais. Esta fun\u00e7\u00e3o substitui ou complementa window.restrictToCurrency.
-        function restrictAndValidateCurrency(inputElement) {
+        // Limpa e analisa o valor do input para um n\u00famero float
+        function parseFormattedValue(value) {
+            const normalizedValue = value.replace(',', '.'); // Substitui v\u00edrgula por ponto para parseFloat
+            return parseFloat(normalizedValue);
+        }
+
+        // Fun\u00e7\u00e3o para filtrar a entrada do utilizador em tempo real (menos agressiva)
+        function filterInput(inputElement) {
             let value = inputElement.value;
-
-            // Permite apenas d\u00edgitos, v\u00edrgulas, pontos e opcionalmente um sinal de menos no in\u00edcio
-            const regex = /^-?[0-9]*([.,][0-9]{0,2})?$/;
-            if (!regex.test(value) && value !== '-') {
-                inputElement.value = value.slice(0, -1); // Remove o \u00faltimo caractere inv\u00e1lido
-                return;
-            }
-
-            // Garante apenas um ponto ou v\u00edrgula
-            const parts = value.split(/[.,]/);
-            if (parts.length > 2) {
-                inputElement.value = parts[0] + '.' + parts[1]; // Mant\u00e9m apenas a primeira parte decimal
-                return;
-            }
+            // Permite apenas d\u00edgitos, v\u00edrgula, ponto e sinal de menos
+            let filteredValue = value.replace(/[^0-9,.-]/g, '');
 
             // Garante que o sinal de menos s\u00f3 aparece no in\u00edcio
-            if (value.indexOf('-') > 0) {
-                inputElement.value = value.replace(/-/g, ''); // Remove sinais de menos que n\u00e3o estejam no in\u00edcio
-                return;
-            }
-
-            // Atualiza o valor para usar ponto como separador decimal para parseFloat
-            const normalizedValue = value.replace(',', '.');
-            const valorNumerico = parseFloat(normalizedValue);
-
-            const selectedTransacaoId = transacaoBancariaIdSelect.value;
-            if (selectedTransacaoId) {
-                const transacaoDetalhes = transactionTypesMap[selectedTransacaoId];
-                if (transacaoDetalhes) {
-                    const transacaoTipo = transacaoDetalhes.tipo; // "Cr\u00e9dito" ou "D\u00e9bito"
-
-                    if (!isNaN(valorNumerico)) {
-                        if (transacaoTipo === 'Cr\u00e9dito' && valorNumerico < 0) {
-                            alert('Para transa\u00e7\u00f5es de Cr\u00e9dito, o valor deve ser positivo.');
-                            inputElement.value = Math.abs(valorNumerico).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        } else if (transacaoTipo === 'D\u00e9bito' && valorNumerico > 0) {
-                            alert('Para transa\u00e7\u00f5es de D\u00e9bito, o valor deve ser negativo.');
-                            inputElement.value = (-Math.abs(valorNumerico)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        }
-                    }
+            if (filteredValue.indexOf('-') > 0) {
+                filteredValue = filteredValue.replace(/-/g, '');
+                if (value.startsWith('-')) { // Se o original tinha '-', mant\u00e9m no in\u00edcio
+                    filteredValue = '-' + filteredValue;
                 }
             }
-            // Formata o valor para exibir sempre duas casas decimais e v\u00edrgula como separador
-            if (!isNaN(valorNumerico) && value.length > 0 && value !== '-' && value !== '.' && value !== ',') {
-                inputElement.value = valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Garante apenas um separador decimal e normaliza para ponto
+            const parts = filteredValue.split(/[.,]/);
+            if (parts.length > 2) {
+                // Se h\u00e1 mais de um separador, considera apenas o primeiro
+                filteredValue = parts[0] + '.' + parts.slice(1).join('').replace(/[.,]/g, '');
+            } else if (parts.length === 2) {
+                filteredValue = parts[0] + '.' + parts[1]; // Normaliza para ponto
             }
+            // N\u00e3o limita casas decimais aqui, para permitir digita\u00e7\u00e3o livre
+
+            inputElement.value = filteredValue; // Atualiza o valor do input com o valor filtrado
         }
 
 
-        // Fun\u00e7\u00e3o para ajustar o tipo de movimento com base no valor
-        function adjustTipoMovimento() {
-            // Substitui v\u00edrgula por ponto para permitir a convers\u00e3o para float
-            const valorNumerico = parseFloat(valorInput.value.replace(',', '.') || '0');
+        // Valida o valor para o tipo de transa\u00e7\u00e3o selecionado e ajusta o tipo de movimento
+        function validateValueForType() {
+            // N\u00e3o chamamos filterInput aqui, pois ele j\u00e1 \u00e9 chamado no event listener 'input'
+            let valorNumerico = parseFormattedValue(valorInput.value);
 
-            if (valorNumerico >= 0) {
-                tipoMovimentoDisplay.value = 'Receita';
-                tipoMovimentoHidden.value = 'Receita';
+            const selectedTransacaoId = transacaoBancariaIdSelect.value;
+            let transacaoTipo = null;
+
+            if (selectedTransacaoId && transactionTypesMap[selectedTransacaoId]) {
+                transacaoTipo = transactionTypesMap[selectedTransacaoId].tipo;
+            }
+
+            valorValidationMessage.classList.add('hidden'); // Esconde a mensagem por padr\u00e3o
+            valorInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500'); // Remove borda vermelha
+
+            if (isNaN(valorNumerico) && valorInput.value !== '' && valorInput.value !== '-') {
+                valorValidationMessage.textContent = 'Por favor, insira um valor numérico válido (ex: 123,45 ou -10,00).';
+                valorValidationMessage.classList.remove('hidden');
+                valorInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            } else if (!isNaN(valorNumerico)) {
+                if (transacaoTipo === 'Crédito' && valorNumerico < 0) {
+                    valorValidationMessage.textContent = 'Para transações de Crédito, o valor deve ser positivo.';
+                    valorValidationMessage.classList.remove('hidden');
+                    valorInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                } else if (transacaoTipo === 'Débito' && valorNumerico > 0) {
+                    valorValidationMessage.textContent = 'Para transações de Débito, o valor deve ser negativo.';
+                    valorValidationMessage.classList.remove('hidden');
+                    valorInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                }
+            }
+
+            // Ajusta o tipo de movimento com base no tipo de transa\u00e7\u00e3o ou no sinal do valor
+            if (transacaoTipo === 'Crédito') {
+                adjustTipoMovimento('Receita');
+            } else if (transacaoTipo === 'Débito') {
+                adjustTipoMovimento('Despesa');
             } else {
-                tipoMovimentoDisplay.value = 'Despesa';
-                tipoMovimentoHidden.value = 'Despesa';
+                adjustTipoMovimento(); // Ajusta com base no sinal atual do valor
             }
         }
 
-        // Adiciona event listener para o campo de valor
+        // Fun\u00e7\u00e3o para ajustar o tipo de movimento (Receita/Despesa)
+        function adjustTipoMovimento(forcedType = null) {
+            if (forcedType) {
+                tipoMovimentoDisplay.value = forcedType;
+                tipoMovimentoHidden.value = forcedType;
+            } else {
+                const valorNumerico = parseFormattedValue(valorInput.value);
+                if (!isNaN(valorNumerico)) {
+                    tipoMovimentoDisplay.value = valorNumerico >= 0 ? 'Receita' : 'Despesa';
+                    tipoMovimentoHidden.value = valorNumerico >= 0 ? 'Receita' : 'Despesa';
+                } else {
+                    // Padr\u00e3o se o valor n\u00e3o for num\u00e9rico (ex: vazio ou apenas '-')
+                    tipoMovimentoDisplay.value = 'Receita';
+                    tipoMovimentoHidden.value = 'Receita';
+                }
+            }
+        }
+
+        // Adiciona event listener para o campo de valor no evento 'input' (a cada tecla digitada)
         valorInput.addEventListener('input', function () {
-            restrictAndValidateCurrency(this);
-            adjustTipoMovimento();
+            filterInput(this); // Filtra caracteres indesejados
+            validateValueForType(); // Valida e ajusta o tipo de movimento
         });
 
-        // Adiciona event listener para o campo de tipo de transa\u00e7\u00e3o
+        // Adiciona event listener para o campo de valor no evento 'blur' (ao sair do campo)
+        valorInput.addEventListener('blur', function () {
+            filterInput(this); // Uma \u00faltima filtragem para garantir
+
+            let valorNumerico = parseFormattedValue(this.value);
+            const selectedTransacaoId = transacaoBancariaIdSelect.value;
+            let transacaoTipo = null;
+
+            if (selectedTransacaoId && transactionTypesMap[selectedTransacaoId]) {
+                transacaoTipo = transactionTypesMap[selectedTransacaoId].tipo;
+            }
+
+            // Aplica a corre\u00e7\u00e3o de sinal e formata\u00e7\u00e3o final ao sair do campo
+            if (!isNaN(valorNumerico)) {
+                if (transacaoTipo === 'Crédito' && valorNumerico < 0) {
+                    valorNumerico = Math.abs(valorNumerico);
+                } else if (transacaoTipo === 'Débito' && valorNumerico > 0) {
+                    valorNumerico = -Math.abs(valorNumerico);
+                }
+                this.value = formatCurrency(valorNumerico);
+            } else if (this.value === '' || this.value === '-') {
+                // Se o campo estiver vazio ou apenas com "-", zera e formata
+                this.value = formatCurrency(0);
+            } else {
+                // Para valores inv\u00e1lidos que n\u00e3o s\u00e3o vazio/\u00faltimo "-", limpa o campo
+                this.value = '';
+            }
+            validateValueForType(); // Re-valida para garantir que as mensagens est\u00e3o corretas ap\u00f3s o blur
+        });
+
+        // Adiciona event listener para o campo de tipo de transa\u00e7\u00e3o no evento 'change'
         transacaoBancariaIdSelect.addEventListener('change', function () {
-            // Re-valida o valor atual quando o tipo de transa\u00e7\u00e3o muda
-            restrictAndValidateCurrency(valorInput);
-            adjustTipoMovimento(); // Garante que o tipo de movimento tamb\u00e9m seja atualizado
+            validateValueForType(); // Re-valida o valor atual para o novo tipo de transa\u00e7\u00e3o
+            valorInput.dispatchEvent(new Event('blur')); // Simula o blur no campo valor para re-formatar
         });
 
         // Chama as fun\u00e7\u00f5es ao carregar a p\u00e1gina para definir os valores iniciais e validar
-        restrictAndValidateCurrency(valorInput);
-        adjustTipoMovimento();
+        // Isso \u00e9 importante especialmente para o modo de edi\u00e7\u00e3o
+        valorInput.dispatchEvent(new Event('blur')); // Simula o blur para inicializar a formata\u00e7\u00e3o inicial
+        validateValueForType();
     });
 </script>
 {% endblock %}
