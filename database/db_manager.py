@@ -3,6 +3,7 @@ from psycopg.errors import OperationalError, UniqueViolation, UndefinedTable
 from config import Config
 from contextlib import contextmanager
 
+
 def get_db_connection():
     """
     Estabelece uma conexão com o banco de dados PostgreSQL usando as configurações do Config.
@@ -27,7 +28,8 @@ def get_db_connection():
     except Exception as e:
         # Captura quaisquer outros erros inesperados durante a conexão.
         print(f"Erro inesperado ao tentar conectar ao banco de dados: {e}")
-        raise RuntimeError("Erro inesperado ao conectar ao banco de dados.") from e
+        raise RuntimeError(
+            "Erro inesperado ao conectar ao banco de dados.") from e
 
 
 @contextmanager
@@ -41,7 +43,8 @@ def get_db_cursor(commit=False):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        yield cursor  # O cursor é retornado para ser usado dentro do bloco 'with'.
+        # O cursor é retornado para ser usado dentro do bloco 'with'.
+        yield cursor
         if commit:
             conn.commit()  # Commita as alterações se 'commit' for True.
     except Exception as e:
@@ -80,68 +83,17 @@ def execute_query(query, params=None, fetchone=False, fetchall=False, commit=Fal
             elif fetchall:
                 return cursor.fetchall()
             else:
-                return True  # Retorna True para operações de inserção/atualização/deleção bem-sucedidas.
+                # Retorna True para operações de inserção/atualização/deleção bem-sucedidas.
+                return True
     except OperationalError as e:
         print(f"Erro de operação no banco de dados: {e}")
-        return False  # Retorna False para erros que impedem a operação (ex: banco offline).
+        # Retorna False para erros que impedem a operação (ex: banco offline).
+        return False
     except UniqueViolation as e:
         print(f"Erro de violação de unicidade: {e}")
         # Re-lança a exceção com uma mensagem mais amigável, útil para validação.
-        raise ValueError("Violação de unicidade de dados. Este registro já existe.") from e
+        raise ValueError(
+            "Violação de unicidade de dados. Este registro já existe.") from e
     except Exception as e:
         print(f"Erro inesperado ao executar consulta: {e}")
-        raise  # Re-lança quaisquer outras exceções inesperadas.
-
-
-def check_and_update_table_constraints():
-    """
-    Verifica e atualiza as constraints da tabela 'users'.
-    Adiciona colunas 'password_hash', 'is_active', 'is_admin' se elas não existirem.
-    """
-    try:
-        with get_db_cursor(commit=True) as cursor:
-            # Verifica a coluna 'password_hash'
-            cursor.execute("""
-                SELECT column_name FROM information_schema.columns
-                WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'password_hash';
-            """)
-            if not cursor.fetchone():
-                print("Adicionando coluna 'password_hash' à tabela 'users'...")
-                cursor.execute(
-                    "ALTER TABLE users ADD COLUMN password_hash VARCHAR(255) DEFAULT '';") # Adicionado DEFAULT para evitar problemas em tabelas existentes
-                print("Coluna 'password_hash' adicionada à tabela 'users'.")
-            else:
-                print("Coluna 'password_hash' já existe.")
-
-            # Verifica a coluna 'is_active'
-            cursor.execute("""
-                SELECT column_name FROM information_schema.columns
-                WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'is_active';
-            """)
-            if not cursor.fetchone():
-                print("Adicionando coluna 'is_active' à tabela 'users'...")
-                cursor.execute(
-                    "ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE;")
-                print("Coluna 'is_active' adicionada à tabela 'users'.")
-            else:
-                print("Coluna 'is_active' já existe.")
-
-            # Verifica a coluna 'is_admin'
-            cursor.execute("""
-                SELECT column_name FROM information_schema.columns
-                WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'is_admin';
-            """)
-            if not cursor.fetchone():
-                print("Adicionando coluna 'is_admin' à tabela 'users'...")
-                cursor.execute(
-                    "ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;")
-                print("Coluna 'is_admin' adicionada à tabela 'users'.")
-            else:
-                print("Coluna 'is_admin' já existe.")
-
-    except UndefinedTable:
-        # Este aviso é normal se a tabela 'users' ainda não foi criada por Usuario.create_table().
-        print("Aviso: A tabela 'users' não existe ao tentar verificar/atualizar constraints. Isso é normal se 'create_table()' for executado primeiro.")
-    except Exception as e:
-        print(f"Erro inesperado durante a verificação/correção das constraints: {e}")
-
+        raise

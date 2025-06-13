@@ -25,6 +25,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Ícones via Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Favicon para a aba do navegador -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/icone.png') }}">
 </head>
 
 <body class="font-inter bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
@@ -32,6 +34,7 @@
     <!-- Inclui a barra de navegação -->
     {% include 'includes/_navbar.html' %}
 
+    <!-- O Container Principal -->
     <main class="flex-grow container mx-auto px-4 py-8">
         <!-- Área para mensagens flash (sucesso, erro, info) -->
         {% with messages = get_flashed_messages(with_categories=true) %}

@@ -1,15 +1,20 @@
 from flask import Flask, render_template
 from flask_login import LoginManager
 from config import Config
-from models.usuario_model import Usuario
-from database.db_manager import check_and_update_table_constraints
-from routes.usuario_routes import bp_usuario
-import logging
 from datetime import datetime
 from werkzeug.exceptions import NotFound, InternalServerError
+import logging
+
+# Importa os MODELOS
+from models.usuario_model import Usuario
+
+# Importa as ROTAS
+from routes.usuario_routes import bp_usuario
 
 # Configuração de logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 def create_app():
     """
@@ -33,7 +38,7 @@ def create_app():
         """
         return Usuario.get_by_id(int(user_id))
 
-    # Registra o Blueprint de usuário
+    # BLUEPRINT
     app.register_blueprint(bp_usuario)
 
     # Context processor para adicionar variáveis globais aos templates
@@ -55,10 +60,9 @@ def create_app():
         Ideal para setup inicial do banco de dados.
         """
         if not hasattr(app, '_db_initialized'):
-            print("Verificando e criando tabela 'users' se necessário...")
+            print("Verificando e criando tabelas no banco de dados, se necessário...")
+            # Criação das tabelas por MODELS
             Usuario.create_table()
-            print("Verificando e atualizando constraints da tabela 'users' se necessário...")
-            check_and_update_table_constraints()
             app._db_initialized = True
             # --- REMOVIDO: Bloco de criação automática do usuário admin ---
             # if not Usuario.get_by_login('admin'):
@@ -72,9 +76,8 @@ def create_app():
 
     return app
 
+
 # Bloco principal para rodar a aplicação
 if __name__ == '__main__':
     app = create_app()
-    # MUDANÇA AQUI: Defina debug=False para testar as páginas de erro personalizadas.
-    # Em produção, debug SEMPRE deve ser False.
-    app.run(debug=True)
+    app.run(debug=True)  # Em produção, debug SEMPRE deve ser False.
