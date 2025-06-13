@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Meus Movimentos Bancários - Finanças Web{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-auto max-w-full lg:max-w-6xl">
+    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Meus Movimentos Bancários</h1>
+
+    <div class="mb-6 text-right">
+        <a href="{{ url_for('movimento_bancario.add_movimento') }}"
+            class="inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-plus-circle mr-2"></i> Adicionar Movimento
+        </a>
+    </div>
+
+    {% if movimentos %}
+    <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conta
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transação
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                    <th scope="col"
+                        class="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valor
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for movimento in movimentos %}
+                <tr>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {% if movimento.conta_detalhes %}
+                        {{ movimento.conta_detalhes.banco }} - Ag: {{ movimento.conta_detalhes.agencia }} C: {{
+                        movimento.conta_detalhes.conta }}
+                        {% else %}
+                        Conta Desconhecida
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {% if movimento.transacao_detalhes %}
+                        {{ movimento.transacao_detalhes.transacao }} ({{ movimento.transacao_detalhes.tipo }})
+                        {% else %}
+                        Transação Desconhecida
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ movimento.data_formatada }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900 text-right">R$ {{ "%.2f" |
+                        format(movimento.valor | float) }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {% if movimento.tipo == 'Receita' %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Receita</span>
+                        {% else %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Despesa</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm font-medium">
+                        {% if movimento.id is not none %}
+                        <a href="{{ url_for('movimento_bancario.edit_movimento', movimento_id=movimento.id) }}"
+                            class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-200">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        {# Bot\u00e3o de Deletar agora usa JavaScript para enviar POST #}
+                        <button type="button"
+                            onclick="confirmDelete('{{ url_for('movimento_bancario.delete_movimento', movimento_id=movimento.id) }}');"
+                            class="text-red-600 hover:text-red-900 transition duration-200 cursor-pointer">
+                            <i class="fas fa-trash-alt"></i> Deletar
+                        </button>
+                        {% else %}
+                        <span class="text-gray-500">N/A</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-center text-gray-600 py-8">Nenhum movimento bancário cadastrado ainda.</p>
+    {% endif %}
+</div>
+
+<script>
+    function confirmDelete(deleteUrl) {
+        if (confirm('Tem certeza que deseja deletar este movimento bancário?')) {
+            fetch(deleteUrl, {
+                method: 'POST',
+                // Incluir um CSRF token aqui seria uma boa pr\u00e1tica para produ\u00e7\u00e3o
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload(); // Recarrega a p\u00e1gina para atualizar a lista
+                    } else {
+                        alert('Erro ao deletar o movimento banc\u00e1rio.');
+                        console.error('Erro de resposta do servidor:', response.statusText);
+                    }
+                })
+                .catch(error => {
+                    alert('Erro ao comunicar com o servidor para deletar o movimento banc\u00e1rio.');
+                    console.error('Erro na requisi\u00e7\u00e3o de delete:', error);
+                });
+        }
+    }
+</script>
+{% endblock %}

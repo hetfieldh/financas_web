@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Adicionar Movimento Bancário - Finanças Web{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Novo Movimento Bancário</h2>
+    <form method="POST" action="{{ url_for('movimento_bancario.add_movimento') }}"
+        data-transacoes-json="{{ transacoes_json_data | tojson }}"> {# Passa a lista de transações como JSON #}
+        <div class="mb-5">
+            <label for="conta_bancaria_id" class="block text-gray-700 text-sm font-medium mb-2">Conta Bancária</label>
+            <select id="conta_bancaria_id" name="conta_bancaria_id" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                <option value="">Selecione uma conta...</option>
+                {% for conta in contas %}
+                <option value="{{ conta.id }}">{{ conta.banco }} - Ag: {{ conta.agencia }} C: {{ conta.conta }} ({{
+                    conta.tipo }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-5">
+            <label for="transacao_bancaria_id" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
+                Transação</label>
+            <select id="transacao_bancaria_id" name="transacao_bancaria_id" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                <option value="">Selecione um tipo de transação...</option>
+                {% for transacao_item in transacoes %} {# Renomeado para evitar conflito com 'transacao' objeto do
+                movimento #}
+                <option value="{{ transacao_item.id }}">{{ transacao_item.transacao }} ({{ transacao_item.tipo }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-5">
+            <label for="data" class="block text-gray-700 text-sm font-medium mb-2">Data</label>
+            <input type="date" id="data" name="data" required value="{{ today_date }}"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+        </div>
+        <div class="mb-5">
+            <label for="valor" class="block text-gray-700 text-sm font-medium mb-2">Valor (R$)</label>
+            <input type="text" id="valor" name="valor" value="0,00" required pattern="^-?[0-9]+([,\.][0-9]{1,2})?$"
+                inputmode="decimal" {# Permite o sinal negativo #}
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Ex: 150.75 ou -50.00">
+        </div>
+        <div class="mb-6">
+            <label for="tipo_movimento_display" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
+                Movimento</label>
+            {# O campo de tipo de movimento agora é somente leitura #}
+            <input type="text" id="tipo_movimento_display" name="tipo" readonly value="Receita" {# Valor inicial padrão
+                #}
+                class="w-full px-4 py-2 border border-gray-300 bg-gray-100 rounded-lg focus:outline-none cursor-not-allowed">
+            <input type="hidden" name="tipo_hidden" id="tipo_hidden" value="Receita"> {# Campo oculto para submeter o
+            valor real #}
+        </div>
+        <div class="flex justify-end space-x-4">
+            <a href="{{ url_for('movimento_bancario.list_movimentos') }}"
+                class="inline-flex items-center px-6 py-2 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                <i class="fas fa-plus-circle mr-2"></i> Adicionar Movimento
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Script para restringir a entrada de valores monet\u00e1rios e ajustar tipo de movimento -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const valorInput = document.getElementById('valor');
+        const tipoMovimentoDisplay = document.getElementById('tipo_movimento_display');
+        const tipoMovimentoHidden = document.getElementById('tipo_hidden');
+        const transacaoBancariaIdSelect = document.getElementById('transacao_bancaria_id');
+        const form = document.querySelector('form');
+
+        // Pega os dados das transações do atributo data-
+        const transacoesData = JSON.parse(form.getAttribute('data-transacoes-json'));
+        // Cria um mapa para fácil acesso: {id_transacao: {transacao: "nome", tipo: "Crédito/Débito"}}
+        const transactionTypesMap = {};
+        transacoesData.forEach(item => {
+            transactionTypesMap[item.id] = { transacao: item.transacao, tipo: item.tipo };
+        });
+
+
+        // Fun\u00e7\u00e3o para restringir a entrada a n\u00fameros decimais no formato de moeda (permite , . e -)
+        // e limita a 2 casas decimais. Esta fun\u00e7\u00e3o substitui ou complementa window.restrictToCurrency.
+        function restrictAndValidateCurrency(inputElement) {
+            let value = inputElement.value;
+
+            // Permite apenas d\u00edgitos, v\u00edrgulas, pontos e opcionalmente um sinal de menos no in\u00edcio
+            const regex = /^-?[0-9]*([.,][0-9]{0,2})?$/;
+            if (!regex.test(value) && value !== '-') {
+                inputElement.value = value.slice(0, -1); // Remove o \u00faltimo caractere inv\u00e1lido
+                return;
+            }
+
+            // Garante apenas um ponto ou v\u00edrgula
+            const parts = value.split(/[.,]/);
+            if (parts.length > 2) {
+                inputElement.value = parts[0] + '.' + parts[1]; // Mant\u00e9m apenas a primeira parte decimal
+                return;
+            }
+
+            // Garante que o sinal de menos s\u00f3 aparece no in\u00edcio
+            if (value.indexOf('-') > 0) {
+                inputElement.value = value.replace(/-/g, ''); // Remove sinais de menos que n\u00e3o estejam no in\u00edcio
+                return;
+            }
+
+            // Atualiza o valor para usar ponto como separador decimal para parseFloat
+            const normalizedValue = value.replace(',', '.');
+            const valorNumerico = parseFloat(normalizedValue);
+
+            const selectedTransacaoId = transacaoBancariaIdSelect.value;
+            if (selectedTransacaoId) {
+                const transacaoDetalhes = transactionTypesMap[selectedTransacaoId];
+                if (transacaoDetalhes) {
+                    const transacaoTipo = transacaoDetalhes.tipo; // "Cr\u00e9dito" ou "D\u00e9bito"
+
+                    if (!isNaN(valorNumerico)) {
+                        if (transacaoTipo === 'Cr\u00e9dito' && valorNumerico < 0) {
+                            alert('Para transa\u00e7\u00f5es de Cr\u00e9dito, o valor deve ser positivo.');
+                            inputElement.value = Math.abs(valorNumerico).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        } else if (transacaoTipo === 'D\u00e9bito' && valorNumerico > 0) {
+                            alert('Para transa\u00e7\u00f5es de D\u00e9bito, o valor deve ser negativo.');
+                            inputElement.value = (-Math.abs(valorNumerico)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        }
+                    }
+                }
+            }
+            // Formata o valor para exibir sempre duas casas decimais e v\u00edrgula como separador
+            if (!isNaN(valorNumerico) && value.length > 0 && value !== '-' && value !== '.' && value !== ',') {
+                inputElement.value = valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
+
+
+        // Fun\u00e7\u00e3o para ajustar o tipo de movimento com base no valor
+        function adjustTipoMovimento() {
+            // Substitui v\u00edrgula por ponto para permitir a convers\u00e3o para float
+            const valorNumerico = parseFloat(valorInput.value.replace(',', '.') || '0');
+
+            if (valorNumerico >= 0) {
+                tipoMovimentoDisplay.value = 'Receita';
+                tipoMovimentoHidden.value = 'Receita';
+            } else {
+                tipoMovimentoDisplay.value = 'Despesa';
+                tipoMovimentoHidden.value = 'Despesa';
+            }
+        }
+
+        // Adiciona event listener para o campo de valor
+        valorInput.addEventListener('input', function () {
+            restrictAndValidateCurrency(this);
+            adjustTipoMovimento();
+        });
+
+        // Adiciona event listener para o campo de tipo de transa\u00e7\u00e3o
+        transacaoBancariaIdSelect.addEventListener('change', function () {
+            // Re-valida o valor atual quando o tipo de transa\u00e7\u00e3o muda
+            restrictAndValidateCurrency(valorInput);
+            adjustTipoMovimento(); // Garante que o tipo de movimento tamb\u00e9m seja atualizado
+        });
+
+        // Chama as fun\u00e7\u00f5es ao carregar a p\u00e1gina para definir os valores iniciais e validar
+        restrictAndValidateCurrency(valorInput);
+        adjustTipoMovimento();
+    });
+</script>
+{% endblock %}

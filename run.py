@@ -9,11 +9,13 @@ import logging
 from models.usuario_model import Usuario
 from models.conta_bancaria_model import ContaBancaria
 from models.transacao_bancaria_model import TransacaoBancaria
+from models.movimento_bancario_model import MovimentoBancario
 
 # Importa as ROTAS
 from routes.usuario_routes import bp_usuario
 from routes.conta_bancaria_routes import bp_conta_bancaria
 from routes.transacao_bancaria_routes import bp_transacao_bancaria
+from routes.movimento_bancario_routes import bp_movimento_bancario
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO,
@@ -46,6 +48,7 @@ def create_app():
     app.register_blueprint(bp_usuario)
     app.register_blueprint(bp_conta_bancaria)
     app.register_blueprint(bp_transacao_bancaria)
+    app.register_blueprint(bp_movimento_bancario)
 
     # Context processor para adicionar variáveis globais aos templates
     @app.context_processor
@@ -71,6 +74,7 @@ def create_app():
             Usuario.create_table()
             ContaBancaria.create_table()
             TransacaoBancaria.create_table()
+            MovimentoBancario.create_table()
             app._db_initialized = True
             # --- REMOVIDO: Bloco de criação automática do usuário admin ---
             # if not Usuario.get_by_login('admin'):
