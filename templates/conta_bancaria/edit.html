@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Conta Bancária - Finanças Web{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Editar Conta Bancária</h2>
+    <form method="POST" action="{{ url_for('conta_bancaria.edit_conta', conta_id=conta.id) }}">
+        <div class="mb-5">
+            <label for="banco" class="block text-gray-700 text-sm font-medium mb-2">Banco</label>
+            <input type="text" id="banco" name="banco" value="{{ conta.banco }}" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Nome do Banco">
+        </div>
+        <div class="mb-5">
+            <label for="agencia" class="block text-gray-700 text-sm font-medium mb-2">Agência (máx. 4 caracteres)</label>
+            <input type="text" id="agencia" name="agencia" value="{{ conta.agencia }}" required maxlength="4"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Número da Agência">
+        </div>
+        <div class="mb-5">
+            <label for="conta" class="block text-gray-700 text-sm font-medium mb-2">Conta</label>
+            <input type="text" id="conta" name="conta" value="{{ conta.conta }}" required 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Número da Conta">
+        </div>
+        <div class="mb-5">
+            <label for="tipo" class="block text-gray-700 text-sm font-medium mb-2">Tipo de Conta</label>
+            <select id="tipo" name="tipo" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                {% for tipo_opcao in TIPOS_CONTA %}
+                <option value="{{ tipo_opcao }}" {% if tipo_opcao==conta.tipo %}selected{% endif %}>{{ tipo_opcao }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-5">
+            <label for="saldo_inicial" class="block text-gray-700 text-sm font-medium mb-2">Saldo Inicial (R$)</label>
+            <input type="text" id="saldo_inicial" name="saldo_inicial"
+                value="{{ '%.2f' | format(conta.saldo_inicial | float) }}" required pattern="[0-9]+([,\.][0-9]{1,2})?"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Ex: 1000,00">
+        </div>
+        <div class="mb-5">
+            <label for="saldo_atual" class="block text-gray-700 text-sm font-medium mb-2">Saldo Atual (R$)</label>
+            <input type="text" id="saldo_atual" name="saldo_atual"
+                value="{{ '%.2f' | format(conta.saldo_atual | float) }}" required pattern="[0-9]+([,\.][0-9]{1,2})?"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Ex: 1000,00">
+        </div>
+        <div class="mb-6">
+            <label for="limite" class="block text-gray-700 text-sm font-medium mb-2">Limite (R$)</label>
+            <input type="text" id="limite" name="limite" value="{{ '%.2f' | format(conta.limite | float) }}" required
+                pattern="[0-9]+([,\.][0-9]{1,2})?"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Ex: 500,00">
+        </div>
+        <div class="flex justify-end space-x-4">
+            <a href="{{ url_for('conta_bancaria.list_contas') }}"
+                class="inline-flex items-center px-6 py-2 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                <i class="fas fa-save mr-2"></i> Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
