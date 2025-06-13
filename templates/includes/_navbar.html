@@ -1,23 +1,23 @@
-<nav class="bg-gradient-to-r from-indigo-600 to-purple-700 p-6 shadow-md">
+<nav class="bg-gradient-to-r from-indigo-600 to-purple-700 p-1 shadow-md">
     <div class="w-full px-4 mx-auto flex justify-between items-center max-w-7xl">
         <!-- Logotipo da Aplicação -->
         <a href="{{ url_for('usuario.home') }}" class="text-white text-2xl font-bold tracking-tight flex items-center">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Finanças Web" class="h-10 mr-3">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Finanças Web" class="h-10 mr-1">
             <span class="hidden sm:inline">Finanças Web</span>
         </a>
 
         <!-- Menu de Navegação (Hidden on small screens, shown on medium and up) -->
-        <div class="hidden md:flex items-center space-x-6">
+        <div class="hidden md:flex items-center space-x-1">
             <a href="{{ url_for('usuario.home') }}"
-                class="text-white hover:text-indigo-100 transition duration-200 px-3 py-2 rounded-md">
+                class="text-white text-xs hover:text-indigo-100 transition duration-200 px-3 py-2 rounded-md">
                 <i class="fas fa-home mr-1"></i> Início
             </a>
 
             {% if current_user.is_authenticated %}
             <!-- Dropdown de Cadastros (apenas para admin) -->
-            <div class="relative group pb-1"> <!-- Adicionado pb-1 para estender a área de hover -->
+            <div class="relative group pb-1">
                 <button
-                    class="text-white hover:text-indigo-100 transition duration-200 px-3 py-2 rounded-md flex items-center focus:outline-none">
+                    class="text-white text-xs hover:text-indigo-100 transition duration-200 px-9 py-1 rounded-md flex items-center focus:outline-none">
                     <i class="fas fa-file-alt mr-1"></i> Cadastros <i
                         class="fas fa-caret-down ml-2 group-hover:rotate-180 transition-transform duration-200"></i>
                 </button>
@@ -25,25 +25,30 @@
                 <div
                     class="absolute invisible opacity-0 group-hover:visible group-hover:opacity-100 bg-indigo-700 text-white rounded-md shadow-lg min-w-[160px] z-10 top-full left-0 transition-all duration-200 ease-out pt-2">
                     <a href="{{ url_for('usuario.list_users') }}"
-                        class="block px-4 py-2 hover:bg-indigo-600 rounded-md transition duration-200">
+                        class="block px-4 py-2 text-xs hover:bg-indigo-600 rounded-md transition duration-200">
                         <i class="fas fa-user-friends mr-1"></i> Usuário
                     </a>
-                    <!-- NOVO ITEM: Conta Bancária para Desktop -->
+
                     <a href="{{ url_for('conta_bancaria.list_contas') }}"
-                        class="block px-4 py-2 hover:bg-indigo-600 rounded-md transition duration-200">
+                        class="block px-4 py-2 text-xs hover:bg-indigo-600 rounded-md transition duration-200">
                         <i class="fas fa-university mr-1"></i> Conta Bancária
+                    </a>
+
+                    <a href="{{ url_for('transacao_bancaria.list_transacoes') }}"
+                        class="block px-4 py-2 text-xs hover:bg-indigo-600 rounded-md transition duration-200">
+                        <i class="fas fa-university mr-1"></i> TR Bancária
                     </a>
                     <!-- Futuras expansões de cadastro aqui -->
                 </div>
             </div>
 
             <a href="{{ url_for('usuario.logout') }}"
-                class="text-white bg-indigo-500 px-4 py-2 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
+                class="text-white text-xs bg-indigo-500 px-4 py-2 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
                 <i class="fas fa-sign-out-alt mr-1"></i> Sair ({{ current_user.login }})
             </a>
             {% else %}
             <a href="{{ url_for('usuario.login') }}"
-                class="text-white bg-indigo-500 px-4 py-2 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
+                class="text-white text-xs bg-indigo-500 px-4 py-2 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
                 <i class="fas fa-sign-in-alt mr-1"></i> Entrar
             </a>
             {% endif %}
@@ -66,7 +71,7 @@
         <ul class="flex flex-col space-y-2 p-4">
             <li>
                 <a href="{{ url_for('usuario.home') }}"
-                    class="block text-white hover:text-indigo-100 transition duration-200 py-2 px-3 rounded-md">
+                    class="block text-white text-xs hover:text-indigo-100 transition duration-200 py-2 px-3 rounded-md">
                     <i class="fas fa-home mr-1"></i> Início
                 </a>
             </li>
@@ -75,7 +80,7 @@
             <!-- Item de Cadastros para Mobile com submenu -->
             <li>
                 <button
-                    class="mobile-dropdown-toggle w-full text-left text-white hover:text-indigo-100 transition duration-200 py-2 px-3 rounded-md flex items-center justify-between focus:outline-none">
+                    class="mobile-dropdown-toggle w-full text-left text-white text-xs hover:text-indigo-100 transition duration-200 py-2 px-3 rounded-md flex items-center justify-between focus:outline-none">
                     <span class="flex items-center"><i class="fas fa-file-alt mr-1"></i> Cadastros</span>
                     <i
                         class="fas fa-chevron-down ml-2 transform mobile-dropdown-arrow transition-transform duration-200"></i>
@@ -83,14 +88,14 @@
                 <ul class="mobile-dropdown-content hidden pl-6 space-y-1">
                     <li>
                         <a href="{{ url_for('usuario.list_users') }}"
-                            class="block text-white hover:bg-indigo-600 transition duration-200 py-2 px-3 rounded-md">
+                            class="block text-white text-xs hover:bg-indigo-600 transition duration-200 py-2 px-3 rounded-md">
                             <i class="fas fa-user-friends mr-1"></i> Usuário
                         </a>
                     </li>
                     <!-- NOVO ITEM: Conta Bancária para Mobile -->
                     <li>
                         <a href="{{ url_for('conta_bancaria.list_contas') }}"
-                            class="block text-white hover:bg-indigo-600 transition duration-200 py-2 px-3 rounded-md">
+                            class="block text-white text-xs hover:bg-indigo-600 transition duration-200 py-2 px-3 rounded-md">
                             <i class="fas fa-university mr-1"></i> Conta Bancária
                         </a>
                     </li>
@@ -100,14 +105,14 @@
             {% endif %}
             <li>
                 <a href="{{ url_for('usuario.logout') }}"
-                    class="block text-white bg-indigo-500 py-2 px-3 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
+                    class="block text-white text-xs bg-indigo-500 py-2 px-3 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
                     <i class="fas fa-sign-out-alt mr-1"></i> Sair ({{ current_user.login }})
                 </a>
             </li>
             {% else %}
             <li>
                 <a href="{{ url_for('usuario.login') }}"
-                    class="block text-white bg-indigo-500 py-2 px-3 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
+                    class="block text-white text-xs bg-indigo-500 py-2 px-3 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
                     <i class="fas fa-sign-in-alt mr-1"></i> Entrar
                 </a>
             </li>
