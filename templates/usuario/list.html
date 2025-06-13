@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciar Usuários - Finanças Web{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-auto max-w-full lg:max-w-4xl">
+    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Gerenciar Usuários</h1>
+
+    <div class="mb-6 text-right">
+        <a href="{{ url_for('usuario.add_user') }}"
+            class="inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-plus-circle mr-2"></i> Adicionar Usuário
+        </a>
+    </div>
+
+    {% if users %}
+    <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Login
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for user in users %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.login }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        {% if user.is_admin %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Sim</span>
+                        {% else %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Não</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{{ url_for('usuario.edit_user', user_id=user.id) }}"
+                            class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-200">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form action="{{ url_for('usuario.delete_user', user_id=user.id) }}" method="POST"
+                            class="inline" onsubmit="return confirm('Tem certeza que deseja deletar este usuário?');">
+                            <button type="submit" class="text-red-600 hover:text-red-900 transition duration-200">
+                                <i class="fas fa-trash-alt"></i> Deletar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-center text-gray-600 py-8">Nenhum usuário cadastrado ainda.</p>
+    {% endif %}
+</div>
+{% endblock %}

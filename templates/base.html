@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Finanças Web{% endblock %}</title>
+    <!-- Inclui o Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuração personalizada do Tailwind (opcional, se precisar de temas ou plugins) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Link para o CSS principal (agora quase vazio, para estilos muito específicos) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Fonte Inter do Google Fonts para um visual moderno -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Ícones via Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body class="font-inter bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Inclui a barra de navegação -->
+    {% include 'includes/_navbar.html' %}
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Área para mensagens flash (sucesso, erro, info) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for category, message in messages %}
+            <div class="p-4 rounded-lg shadow-sm
+                            {% if category == 'success' %}bg-green-100 text-green-700{% endif %}
+                            {% if category == 'danger' %}bg-red-100 text-red-700{% endif %}
+                            {% if category == 'info' %}bg-blue-100 text-blue-700{% endif %}
+                            {% if category == 'warning' %}bg-yellow-100 text-yellow-700{% endif %}
+                        ">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Bloco para o conteúdo específico de cada página -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Inclui o rodapé -->
+    {% include 'includes/_footer.html' %}
+
+    <!-- Link para o JavaScript principal -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

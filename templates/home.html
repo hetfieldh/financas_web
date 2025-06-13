@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Início - Finanças Web{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center mx-auto max-w-2xl">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">Bem-vindo(a), {{ user.name }}!</h1>
+    <p class="text-lg text-gray-600 mb-6">Este é o painel inicial do seu sistema de finanças.</p>
+    <p class="text-md text-gray-500">
+        Explore as funcionalidades no menu de navegação.
+        {% if user.is_admin %}
+            <span class="font-semibold text-indigo-600">Você é um administrador.</span>
+        {% endif %}
+    </p>
+    <div class="mt-8">
+        <a href="{{ url_for('usuario.list_users') }}"
+           class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out transform hover:-translate-y-1">
+            <i class="fas fa-users mr-2"></i> Gerenciar Usuários
+        </a>
+    </div>
+</div>
+{% endblock %}

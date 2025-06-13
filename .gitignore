@@ -1,0 +1,19 @@
+# Ambientes Virtuais
+venv/
+.venv/
+
+# outros
+secret_key.py
+
+# Arquivos de Cache e Compilação do Python
+__pycache__/
+*.pyc
+
+# Arquivos de Ambiente
+.env
+
+# Arquivos de log
+*.log
+
+# Bancos de dados locais (se usar SQLite, por exemplo)
+*.db
