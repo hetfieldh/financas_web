@@ -10,12 +10,16 @@ from models.usuario_model import Usuario
 from models.conta_bancaria_model import ContaBancaria
 from models.transacao_bancaria_model import TransacaoBancaria
 from models.movimento_bancario_model import MovimentoBancario
+from models.crediario_model import Crediario
+from models.grupo_crediario_model import GrupoCrediario
 
 # Importa as ROTAS
 from routes.usuario_routes import bp_usuario
 from routes.conta_bancaria_routes import bp_conta_bancaria
 from routes.transacao_bancaria_routes import bp_transacao_bancaria
 from routes.movimento_bancario_routes import bp_movimento_bancario
+from routes.crediario_routes import bp_crediario
+from routes.grupo_crediario_routes import bp_grupo_crediario
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO,
@@ -49,6 +53,8 @@ def create_app():
     app.register_blueprint(bp_conta_bancaria)
     app.register_blueprint(bp_transacao_bancaria)
     app.register_blueprint(bp_movimento_bancario)
+    app.register_blueprint(bp_crediario)
+    app.register_blueprint(bp_grupo_crediario)
 
     # Context processor para adicionar variáveis globais aos templates
     @app.context_processor
@@ -75,6 +81,8 @@ def create_app():
             ContaBancaria.create_table()
             TransacaoBancaria.create_table()
             MovimentoBancario.create_table()
+            Crediario.create_table()
+            GrupoCrediario.create_table()
             app._db_initialized = True
             # --- REMOVIDO: Bloco de criação automática do usuário admin ---
             # if not Usuario.get_by_login('admin'):
