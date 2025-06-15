@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Extrato Banc\u00e1rio - Finan\u00e7as Web{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Gerar Extrato Banc\u00e1rio</h2>
+    <form method="POST" action="{{ url_for('extratos.bancario_form') }}">
+        <div class="mb-5">
+            <label for="conta_id" class="block text-gray-700 text-sm font-medium mb-2">Conta Banc\u00e1ria</label>
+            <select id="conta_id" name="conta_id" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                {% if contas %}
+                {% for conta in contas %}
+                <option value="{{ conta.id }}">{{ conta.banco }} ({{ conta.conta }}) - Saldo: R$ {{ "%.2f" |
+                    format(conta.saldo_atual | float) }}</option>
+                {% endfor %}
+                {% else %}
+                <option value="" disabled selected>Nenhuma conta banc\u00e1ria cadastrada</option>
+                {% endif %}
+            </select>
+            {% if not contas %}
+            <p class="mt-2 text-sm text-red-600">Voc\u00ea precisa cadastrar uma conta banc\u00e1ria primeiro para gerar
+                extratos.</p>
+            <a href="{{ url_for('conta_bancaria.add_conta') }}"
+                class="text-indigo-600 hover:text-indigo-800 text-sm">Adicionar Conta Banc\u00e1ria</a>
+            {% endif %}
+        </div>
+        <div class="mb-6">
+            <label for="mes_ano" class="block text-gray-700 text-sm font-medium mb-2">M\u00eas/Ano</label>
+            <select id="mes_ano" name="mes_ano" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                {% for ma in meses_anos %}
+                <option value="{{ ma.value }}" {% if loop.index==1 %}selected{% endif %}>{{ ma.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex justify-end">
+            <button type="submit"
+                class="inline-flex items-center px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 {% if not contas %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if not contas %}disabled{% endif %}>
+                <i class="fas fa-file-alt mr-2"></i> Gerar Extrato
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

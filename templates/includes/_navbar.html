@@ -84,6 +84,21 @@
                 </div>
             </div>
 
+            <div class="relative group pb-1">
+                <button
+                    class="text-white text-sm hover:text-indigo-100 transition duration-200 px-3 py-2 rounded-md flex items-center focus:outline-none">
+                    <i class="fas fa-chart-line mr-1"></i> Extratos <i
+                        class="fas fa-caret-down ml-2 group-hover:rotate-180 transition-transform duration-200"></i>
+                </button>
+                <div
+                    class="absolute invisible opacity-0 group-hover:visible group-hover:opacity-100 bg-indigo-700 text-white rounded-md shadow-lg min-w-[160px] z-10 top-full left-0 transition-all duration-200 ease-out pt-2">
+                    <a href="{{ url_for('extratos.bancario_form') }}"
+                        class="block px-4 py-2 text-sm hover:bg-indigo-600 rounded-md transition duration-200">
+                        <i class="fas fa-university mr-1"></i> Bancário
+                    </a>
+                </div>
+            </div>
+
             <a href="{{ url_for('usuario.logout') }}"
                 class="text-white text-sm bg-indigo-500 px-4 py-2 rounded-md hover:bg-indigo-400 transition duration-200 shadow-md">
                 <i class="fas fa-sign-out-alt mr-1"></i> Sair ({{ current_user.login }})

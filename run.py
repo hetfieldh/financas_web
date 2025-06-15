@@ -2,6 +2,7 @@ from flask import Flask, render_template
 from flask_login import LoginManager
 from config import Config
 from datetime import datetime
+from datetime import datetime, date
 from werkzeug.exceptions import NotFound, InternalServerError
 import logging
 
@@ -26,6 +27,7 @@ from routes.grupo_crediario_routes import bp_grupo_crediario
 from routes.movimento_crediario_routes import bp_movimento_crediario
 from routes.despesa_receita_routes import bp_despesa_receita
 from routes.despesa_fixa_routes import bp_despesa_fixa
+from routes.extratos_routes import bp_extratos
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO,
@@ -64,8 +66,17 @@ def create_app():
     app.register_blueprint(bp_movimento_crediario)
     app.register_blueprint(bp_despesa_receita)
     app.register_blueprint(bp_despesa_fixa)
+    app.register_blueprint(bp_extratos)
 
-    # Context processor para adicionar variáveis globais aos templates
+    @app.template_filter('strftime')
+    def format_datetime(value, format="%d/%m/%Y"):
+        """
+        Formata um objeto datetime ou date para uma string.
+        """
+        if isinstance(value, (datetime, date)):
+            return value.strftime(format)
+        return value
+
     @app.context_processor
     def inject_global_variables():
         """
@@ -76,7 +87,6 @@ def create_app():
             current_year=datetime.now().year
         )
 
-    # Hook para executar ações antes da primeira requisição
     @app.before_request
     def before_first_request_actions():
         """
@@ -109,7 +119,6 @@ def create_app():
     return app
 
 
-# Bloco principal para rodar a aplicação
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True)  # Em produção, debug SEMPRE deve ser False.

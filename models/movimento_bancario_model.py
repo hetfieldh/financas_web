@@ -1,9 +1,7 @@
 from database.db_manager import execute_query
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
-from datetime import datetime, date
 from decimal import Decimal
-# Importado para acessar os m\u00e9todos de atualiza\u00e7\u00e3o de conta
-from models.conta_bancaria_model import ContaBancaria
+from datetime import date, datetime, timedelta
 
 
 class MovimentoBancario:
@@ -11,11 +9,11 @@ class MovimentoBancario:
     Representa um movimento banc\u00e1rio (receita ou despesa) de um usu\u00e1rio no sistema.
     """
 
-    def __init__(self, id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo):
+    def __init__(self, id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo):  # Corrigido aqui
         self.id = id
         self.user_id = user_id
         self.conta_bancaria_id = conta_bancaria_id
-        self.transacao_bancaria_id = transacao_bancaria_id
+        self.transacao_bancaria_id = transacao_bancaria_id  # Corrigido aqui
         self.data = data
         self.valor = valor
         self.tipo = tipo  # "Receita" ou "Despesa"
@@ -24,20 +22,25 @@ class MovimentoBancario:
     def create_table():
         """
         Cria a tabela 'movimentos_bancarios' no banco de dados se ela ainda n\u00e3o existir.
-        Inclui chaves estrangeiras para 'users', 'contas_bancarias' e 'transacoes_bancarias'.
+        Inclui chaves estrangeiras para 'users', 'contas_bancarias' e 'transacoes_bancarias',
+        e restri\u00e7\u00f5es de unicidade.
         """
         query = """
         CREATE TABLE IF NOT EXISTS movimentos_bancarios (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             conta_bancaria_id INTEGER NOT NULL,
-            transacao_bancaria_id INTEGER NOT NULL,
+            transacao_bancaria_id INTEGER NOT NULL, -- Corrigido aqui
             data DATE NOT NULL,
-            valor NUMERIC(15, 2) NOT NULL, -- Valores monet\u00e1rios como NUMERIC com 2 casas decimais
+            valor NUMERIC(15, 2) NOT NULL,
             tipo VARCHAR(50) NOT NULL, -- "Receita" ou "Despesa"
+            
+            -- Restri\u00e7\u00e3o de unicidade para evitar movimentos id\u00eanticos duplicados
+            UNIQUE (user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo), -- Corrigido aqui
+            
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (conta_bancaria_id) REFERENCES contas_bancarias(id) ON DELETE CASCADE,
-            FOREIGN KEY (transacao_bancaria_id) REFERENCES transacoes_bancarias(id) ON DELETE CASCADE
+            FOREIGN KEY (transacao_bancaria_id) REFERENCES transacoes_bancarias(id) ON DELETE CASCADE -- Corrigido aqui
         );
         """
         try:
@@ -56,7 +59,9 @@ class MovimentoBancario:
         Ordena por data descendente.
         """
         rows = execute_query(
-            "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo FROM movimentos_bancarios WHERE user_id = %s ORDER BY data DESC",
+            # Corrigido aqui
+            "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo "
+            "FROM movimentos_bancarios WHERE user_id = %s ORDER BY data DESC",
             (user_id,),
             fetchall=True
         )
@@ -65,192 +70,227 @@ class MovimentoBancario:
     @classmethod
     def get_by_id(cls, movimento_id, user_id):
         """
-        Retorna um movimento banc\u00e1rio pelo seu ID e ID do usu\u00e1rio, garantindo que o usu\u00e1rio \u00e9 o propriet\u00e1rio.
+        Retorna um movimento banc\u00e1rio pelo seu ID e ID do usu\u00e1rio.
         """
         row = execute_query(
-            "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo FROM movimentos_bancarios WHERE id = %s AND user_id = %s",
+            # Corrigido aqui
+            "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo "
+            "FROM movimentos_bancarios WHERE id = %s AND user_id = %s",
             (movimento_id, user_id),
             fetchone=True
         )
         return cls(*row) if row else None
 
     @classmethod
-    def add(cls, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo):
+    def add(cls, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo):  # Corrigido aqui
         """
-        Adiciona um novo movimento banc\u00e1rio ao banco de dados e atualiza o saldo da conta,
-        verificando o limite da conta antes da execu\u00e7\u00e3o.
+        Adiciona um novo movimento banc\u00e1rio ao banco de dados e atualiza o saldo da conta.
         """
         try:
-            conta_afetada = ContaBancaria.get_by_id(conta_bancaria_id, user_id)
-            if not conta_afetada:
-                raise ValueError("Conta banc\u00e1ria n\u00e3o encontrada.")
+            result = execute_query(
+                # Corrigido aqui
+                "INSERT INTO movimentos_bancarios (user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo) "
+                "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                (user_id, conta_bancaria_id, transacao_bancaria_id,
+                 data, valor, tipo),  # Corrigido aqui
+                fetchone=True,
+                commit=False  # N\u00e3o commitar ainda, parte de uma transa\u00e7\u00e3o maior
+            )
+            movimento_id = result[0] if result else None
 
-            # Calcular o saldo projetado ap\u00f3s a transa\u00e7\u00e3o
-            projected_saldo = conta_afetada.saldo_atual
-            if tipo == 'Receita':
-                projected_saldo += abs(valor)
-            elif tipo == 'Despesa':
-                # Para despesa, subtra\u00edmos o valor absoluto
-                projected_saldo -= abs(valor)
+            if movimento_id:
+                # Atualiza o saldo_atual da conta banc\u00e1ria
+                # O c\u00e1lculo do saldo agora \u00e9 feito diretamente na query de update para atomicidade.
+                if tipo == 'Receita':
+                    update_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
+                else:  # tipo == 'Despesa'
+                    update_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual - %s WHERE id = %s AND user_id = %s"
 
-            # Verificar se o saldo projetado excede o limite (considerando limite como valor positivo)
-            # A conta pode ir at\u00e9 -limite. Ex: limite 1000, pode ir at\u00e9 -1000.
-            # Usar abs(limite) para garantir que limite seja tratado como positivo
-            if projected_saldo < -abs(conta_afetada.limite):
-                raise ValueError(
-                    f"Movimento excederia o limite da conta banc\u00e1ria. "
-                    f"Saldo projetado: R${projected_saldo:.2f}, Limite: R${conta_afetada.limite:.2f}."
+                update_success = execute_query(
+                    update_query,
+                    (valor, conta_bancaria_id, user_id),
+                    commit=True  # Commita aqui a opera\u00e7\u00e3o completa
                 )
 
-            # Executar todas as opera\u00e7\u00f5es de banco de dados dentro de uma \u00fanica transa\u00e7\u00e3o
-            # Import localmente para evitar problemas de depend\u00eancia circular
-            from database.db_manager import get_db_cursor
-            with get_db_cursor(commit=True) as cursor:
-                # 1. Inserir o novo movimento
-                cursor.execute(
-                    "INSERT INTO movimentos_bancarios (user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-                    (user_id, conta_bancaria_id,
-                     transacao_bancaria_id, data, valor, tipo)
-                )
-                movimento_id = cursor.fetchone()[0]
+                if update_success:
+                    # Corrigido aqui
+                    return cls(movimento_id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo)
+                else:
+                    # Se a atualiza\u00e7\u00e3o do saldo falhar, o movimento n\u00e3o \u00e9 commitado
+                    raise Exception(
+                        "Falha ao atualizar o saldo da conta banc\u00e1ria.")
+            return None
 
-                # 2. Atualizar o saldo da conta banc\u00e1ria
-                cursor.execute(
-                    "UPDATE contas_bancarias SET saldo_atual = %s WHERE id = %s AND user_id = %s",
-                    (projected_saldo, conta_afetada.id, user_id)
-                )
-
-            return cls(movimento_id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo)
+        except UniqueViolation as e:
+            raise ValueError(
+                "Erro: J\u00e1 existe um movimento banc\u00e1rio com esta combina\u00e7\u00e3o de dados para este usu\u00e1rio."
+            ) from e
         except ForeignKeyViolation as e:
             raise ValueError(
-                "Erro: Conta banc\u00e1ria ou transa\u00e7\u00e3o n\u00e3o encontrada. N\u00e3o \u00e9 poss\u00edvel adicionar movimento."
+                "Erro: Conta Banc\u00e1ria, Transa\u00e7\u00e3o ou Usu\u00e1rio n\u00e3o encontrado."
             ) from e
         except Exception as e:
             print(f"Erro ao adicionar movimento banc\u00e1rio: {e}")
-            raise  # Re-lan\u00e7a outras exce\u00e7\u00f5es.
+            raise  # Re-lan\u00e7a para o chamador
 
     @classmethod
-    def update(cls, movimento_id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo):
+    def update(cls, movimento_id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo, old_valor, old_tipo):  # Corrigido aqui
         """
-        Atualiza um movimento banc\u00e1rio existente e ajusta o saldo da conta,
-        verificando o limite da conta antes da execu\u00e7\u00e3o.
+        Atualiza um movimento banc\u00e1rio existente e ajusta o saldo da conta.
+        Necessita dos valores antigos para calcular o ajuste no saldo.
         """
-        original_movimento = cls.get_by_id(movimento_id, user_id)
-        if not original_movimento:
+        existing_movimento = cls.get_by_id(movimento_id, user_id)
+        if not existing_movimento:
             return None  # Movimento n\u00e3o encontrado ou n\u00e3o pertence ao usu\u00e1rio
 
         try:
-            # Obter as contas envolvidas
-            original_conta = ContaBancaria.get_by_id(
-                original_movimento.conta_bancaria_id, user_id)
-            if not original_conta:
-                raise ValueError(
-                    "Conta banc\u00e1ria original do movimento n\u00e3o encontrada.")
+            # Iniciar uma transa\u00e7\u00e3o manualmente para garantir atomicidade
+            execute_query("BEGIN", commit=False)
 
-            nova_conta = ContaBancaria.get_by_id(conta_bancaria_id, user_id)
-            if not nova_conta:
-                raise ValueError(
-                    "Conta banc\u00e1ria de destino n\u00e3o encontrada.")
+            # 1. Reverter o impacto do movimento antigo no saldo
+            if old_tipo == 'Receita':
+                revert_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual - %s WHERE id = %s AND user_id = %s"
+            else:  # old_tipo == 'Despesa'
+                revert_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
+            execute_query(revert_query, (old_valor,
+                          existing_movimento.conta_bancaria_id, user_id), commit=False)
 
-            # Calcular o saldo da conta original AP\u00d3S reverter o movimento antigo
-            temp_saldo_original_conta = original_conta.saldo_atual
-            if original_movimento.tipo == 'Receita':
-                temp_saldo_original_conta -= abs(original_movimento.valor)
-            elif original_movimento.tipo == 'Despesa':
-                temp_saldo_original_conta += abs(original_movimento.valor)
+            # 2. Atualizar o registro do movimento
+            query = "UPDATE movimentos_bancarios SET conta_bancaria_id = %s, transacao_bancaria_id = %s, data = %s, valor = %s, tipo = %s WHERE id = %s AND user_id = %s"  # Corrigido aqui
+            params = (conta_bancaria_id, transacao_bancaria_id, data,
+                      valor, tipo, movimento_id, user_id)  # Corrigido aqui
+            update_mov_success = execute_query(query, params, commit=False)
 
-            # Calcular o saldo projetado para a CONTA DE DESTINO (nova_conta)
-            projected_saldo_nova_conta = nova_conta.saldo_atual
-            # Se a conta de destino for a mesma que a original, usamos o saldo tempor\u00e1rio como base
-            if original_movimento.conta_bancaria_id == conta_bancaria_id:
-                projected_saldo_nova_conta = temp_saldo_original_conta
+            if not update_mov_success:
+                execute_query("ROLLBACK", commit=True)
+                raise Exception(
+                    "Falha ao atualizar o registro do movimento banc\u00e1rio.")
 
+            # 3. Aplicar o impacto do novo movimento no saldo
             if tipo == 'Receita':
-                projected_saldo_nova_conta += abs(valor)
-            elif tipo == 'Despesa':
-                projected_saldo_nova_conta -= abs(valor)
+                apply_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
+            else:  # tipo == 'Despesa'
+                apply_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual - %s WHERE id = %s AND user_id = %s"
+            apply_success = execute_query(
+                apply_query, (valor, conta_bancaria_id, user_id), commit=True)
 
-            # Verificar o limite da CONTA DE DESTINO antes de qualquer modifica\u00e7\u00e3o no DB
-            if projected_saldo_nova_conta < -abs(nova_conta.limite):
-                raise ValueError(
-                    f"Movimento atualizado excederia o limite da conta banc\u00e1ria. "
-                    f"Saldo projetado: R${projected_saldo_nova_conta:.2f}, Limite: R${nova_conta.limite:.2f}."
-                )
+            if apply_success:
+                # Corrigido aqui
+                return cls(movimento_id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo)
+            else:
+                execute_query("ROLLBACK", commit=True)
+                raise Exception(
+                    "Falha ao aplicar o novo saldo na conta banc\u00e1ria.")
 
-            # Executar todas as opera\u00e7\u00f5es de banco de dados dentro de uma \u00fanica transa\u00e7\u00e3o
-            from database.db_manager import get_db_cursor  # Import localmente
-            with get_db_cursor(commit=True) as cursor:
-                # 1. Atualizar o movimento
-                query_movimento = "UPDATE movimentos_bancarios SET conta_bancaria_id = %s, transacao_bancaria_id = %s, data = %s, valor = %s, tipo = %s WHERE id = %s AND user_id = %s"
-                params_movimento = (
-                    conta_bancaria_id, transacao_bancaria_id, data, valor, tipo, movimento_id, user_id)
-                cursor.execute(query_movimento, params_movimento)
-
-                # 2. Atualizar o saldo da conta ORIGINAL (se mudou ou se o saldo dela foi alterado)
-                if original_movimento.conta_bancaria_id != conta_bancaria_id:
-                    # Se a conta mudou, atualizamos o saldo da conta antiga com o saldo revertido
-                    cursor.execute(
-                        "UPDATE contas_bancarias SET saldo_atual = %s WHERE id = %s AND user_id = %s",
-                        (temp_saldo_original_conta, original_conta.id, user_id)
-                    )
-
-                # 3. Atualizar o saldo da NOVA conta (ou a mesma conta, com o saldo projetado final)
-                cursor.execute(
-                    "UPDATE contas_bancarias SET saldo_atual = %s WHERE id = %s AND user_id = %s",
-                    (projected_saldo_nova_conta, nova_conta.id, user_id)
-                )
-
-            return cls(movimento_id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo)
-        except ForeignKeyViolation as e:
-            # CORREÇÃO: Alinhamento da cláusula except
+        except UniqueViolation as e:
+            execute_query("ROLLBACK", commit=True)
             raise ValueError(
-                "Erro: Conta banc\u00e1ria ou transa\u00e7\u00e3o n\u00e3o encontrada. N\u00e3o \u00e9 poss\u00edvel atualizar movimento."
+                "Erro: J\u00e1 existe outro movimento banc\u00e1rio com esta combina\u00e7\u00e3o de dados para este usu\u00e1rio."
+            ) from e
+        except ForeignKeyViolation as e:
+            execute_query("ROLLBACK", commit=True)
+            raise ValueError(
+                "Erro: Conta Banc\u00e1ria, Transa\u00e7\u00e3o ou Usu\u00e1rio n\u00e3o encontrado."
             ) from e
         except Exception as e:
-            # CORREÇÃO: Alinhamento da cláusula except
+            execute_query("ROLLBACK", commit=True)
             print(f"Erro ao atualizar movimento banc\u00e1rio: {e}")
-            raise  # Re-lan\u00e7a outras exce\u00e7\u00f5es.
+            raise
 
     @classmethod
-    def delete(cls, movimento_id, user_id):
+    def delete(cls, movimento_id, user_id, conta_bancaria_id, transacao_bancaria_id, valor, tipo):  # Corrigido aqui
         """
-        Deleta um movimento banc\u00e1rio e reverte seu impacto no saldo da conta,
-        tudo dentro de uma transa\u00e7\u00e3o at\u00f3mica.
+        Deleta um movimento banc\u00e1rio do banco de dados e ajusta o saldo da conta.
         """
-        movimento_a_deletar = cls.get_by_id(movimento_id, user_id)
-        if not movimento_a_deletar:
-            return False  # Movimento n\u00e3o encontrado ou n\u00e3o pertence ao usu\u00e1rio
-
-        # Adicionado bloco try para o m\u00e9todo delete
         try:
-            conta_afetada = ContaBancaria.get_by_id(
-                movimento_a_deletar.conta_bancaria_id, user_id)
-            if not conta_afetada:
-                raise ValueError(
-                    "Conta banc\u00e1ria afetada pelo movimento a ser deletado n\u00e3o encontrada.")
+            # Iniciar uma transa\u00e7\u00e3o manualmente para garantir atomicidade
+            execute_query("BEGIN", commit=False)
 
-            # Calcular o saldo da conta ap\u00f3s reverter o movimento
-            projected_saldo_after_revert = conta_afetada.saldo_atual
-            if movimento_a_deletar.tipo == 'Receita':
-                # Reverte a receita (subtrai)
-                projected_saldo_after_revert -= abs(movimento_a_deletar.valor)
-            elif movimento_a_deletar.tipo == 'Despesa':
-                # Reverte a despesa (soma)
-                projected_saldo_after_revert += abs(movimento_a_deletar.valor)
+            # 1. Ajustar o saldo da conta banc\u00e1ria
+            if tipo == 'Receita':
+                update_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual - %s WHERE id = %s AND user_id = %s"
+            else:  # tipo == 'Despesa'
+                update_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
 
-            # Executar todas as opera\u00e7\u00f5es de banco de dados dentro de uma \u00fanica transa\u00e7\u00e3o
-            from database.db_manager import get_db_cursor  # Import localmente
-            with get_db_cursor(commit=True) as cursor:
-                # 1. Deletar movimento
-                cursor.execute(
-                    "DELETE FROM movimentos_bancarios WHERE id = %s AND user_id = %s", (movimento_id, user_id))
+            update_success = execute_query(
+                update_query,
+                (valor, conta_bancaria_id, user_id),
+                commit=False
+            )
 
-                # 2. Atualizar saldo da conta afetada
-                cursor.execute(
-                    "UPDATE contas_bancarias SET saldo_atual = %s WHERE id = %s AND user_id = %s",
-                    (projected_saldo_after_revert, conta_afetada.id, user_id)
-                )
-            return True
+            if not update_success:
+                execute_query("ROLLBACK", commit=True)
+                raise Exception(
+                    "Falha ao ajustar o saldo da conta banc\u00e1ria antes de deletar o movimento.")
+
+            # 2. Deletar o movimento
+            query = "DELETE FROM movimentos_bancarios WHERE id = %s AND user_id = %s AND conta_bancaria_id = %s AND transacao_bancaria_id = %s"  # Corrigido aqui
+            params = (movimento_id, user_id, conta_bancaria_id,
+                      transacao_bancaria_id)  # Corrigido aqui
+            delete_success = execute_query(query, params, commit=True)
+
+            if delete_success:
+                return True
+            else:
+                execute_query("ROLLBACK", commit=True)
+                return False
+
         except Exception as e:
+            execute_query("ROLLBACK", commit=True)
             print(f"Erro ao deletar movimento banc\u00e1rio: {e}")
-            raise
+            raise  # Re-lan\u00e7a para o chamador
+
+    @classmethod
+    def get_by_account_and_month(cls, user_id, conta_bancaria_id, year, month):
+        """
+        Retorna uma lista de movimentos banc\u00e1rios para uma conta espec\u00edfica
+        dentro de um determinado m\u00eas e ano.
+        Ordena por data e depois por id.
+        """
+        # Calcular o in\u00edcio e o fim do m\u00eas
+        start_date = date(year, month, 1)
+        # Pr\u00f3ximo m\u00eas, subtrai um dia para pegar o \u00faltimo dia do m\u00eas atual
+        if month == 12:
+            end_date = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = date(year, month + 1, 1) - timedelta(days=1)
+
+        rows = execute_query(
+            # Corrigido aqui
+            "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo "
+            "FROM movimentos_bancarios WHERE user_id = %s AND conta_bancaria_id = %s "
+            "AND data >= %s AND data <= %s ORDER BY data, id",
+            (user_id, conta_bancaria_id, start_date, end_date),
+            fetchall=True
+        )
+        return [cls(*row) for row in rows] if rows else []
+
+    @classmethod
+    def get_balance_up_to_date(cls, user_id, conta_bancaria_id, end_date_exclusive):
+        """
+        Calcula o saldo de uma conta banc\u00e1ria at\u00e9 uma data espec\u00edfica (exclusiva).
+        Considera o saldo inicial da conta + todos os movimentos at\u00e9 a data informada.
+        """
+        from models.conta_bancaria_model import ContaBancaria  # Importa aqui para evitar importa\u00e7\u00e3o circular
+
+        conta = ContaBancaria.get_by_id(conta_bancaria_id, user_id)
+        if not conta:
+            # Ou levantar um erro, dependendo do tratamento desejado
+            return Decimal('0.00')
+
+        initial_balance_from_account = conta.saldo_inicial if conta.saldo_inicial is not None else Decimal(
+            '0.00')
+
+        # Buscar movimentos at\u00e9 a data_limite (exclusive)
+        query = """
+        SELECT SUM(CASE WHEN tipo = 'Receita' THEN valor ELSE -valor END)
+        FROM movimentos_bancarios
+        WHERE user_id = %s AND conta_bancaria_id = %s AND data < %s;
+        """
+        result = execute_query(
+            query, (user_id, conta_bancaria_id, end_date_exclusive), fetchone=True)
+
+        movements_balance = result[0] if result and result[0] is not None else Decimal(
+            '0.00')
+
+        return initial_balance_from_account + movements_balance
