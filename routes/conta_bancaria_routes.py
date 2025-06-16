@@ -1,12 +1,12 @@
+# routes/conta_bancaria_routes.py
+
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required, current_user
 from models.conta_bancaria_model import ContaBancaria
 from functools import wraps
 
-# Cria um Blueprint para organizar as rotas relacionadas a contas bancárias
 bp_conta_bancaria = Blueprint('conta_bancaria', __name__, url_prefix='/contas')
 
-# Definições de tipos de conta para o formulário (pode ser movido para um arquivo de configuração mais tarde)
 TIPOS_CONTA = ["Corrente", "Poupança", "Digital",
                "Restituições", "Vendas", "Serviços", "Outros"]
 
@@ -51,24 +51,20 @@ def add_conta():
         conta = request.form.get('conta')
         tipo = request.form.get('tipo')
         saldo_inicial_str = request.form.get('saldo_inicial').replace(
-            ',', '.')  # Substitui vírgula por ponto
+            ',', '.')
         saldo_atual_str = request.form.get('saldo_atual').replace(
-            ',', '.')     # Substitui vírgula por ponto
+            ',', '.')
         limite_str = request.form.get('limite').replace(
-            ',', '.')               # Substitui vírgula por ponto
+            ',', '.')
 
         try:
-            # Converte valores monetários para float
             saldo_inicial = float(saldo_inicial_str)
             saldo_atual = float(saldo_atual_str)
             limite = float(limite_str)
 
-            # Valida que o campo 'agencia' tem no máximo 4 caracteres
             if len(agencia) > 4:
                 flash('O número da agência deve ter no máximo 4 caracteres.', 'danger')
                 return render_template('conta_bancaria/add.html', TIPOS_CONTA=TIPOS_CONTA)
-
-            # Não há validação de tamanho para 'conta' aqui no Python, apenas maxlength no HTML
 
             ContaBancaria.add(
                 user_id=current_user.id,
@@ -95,7 +91,7 @@ def add_conta():
 
 @bp_conta_bancaria.route('/edit/<int:conta_id>', methods=['GET', 'POST'])
 @login_required
-@own_account_required  # Garante que o usuário só edita suas próprias contas
+@own_account_required
 def edit_conta(conta_id):
     """
     Edita uma conta bancária existente.
@@ -108,7 +104,6 @@ def edit_conta(conta_id):
     if request.method == 'POST':
         banco = request.form.get('banco')
         agencia = request.form.get('agencia')
-        # Renomeado para evitar conflito com 'conta' objeto
         conta_num = request.form.get('conta')
         tipo = request.form.get('tipo')
         saldo_inicial_str = request.form.get('saldo_inicial').replace(',', '.')
@@ -120,7 +115,6 @@ def edit_conta(conta_id):
             saldo_atual = float(saldo_atual_str)
             limite = float(limite_str)
 
-            # Valida que o campo 'agencia' tem no máximo 4 caracteres
             if len(agencia) > 4:
                 flash('O número da agência deve ter no máximo 4 caracteres.', 'danger')
                 return render_template('conta_bancaria/edit.html', conta=conta, TIPOS_CONTA=TIPOS_CONTA)
@@ -130,7 +124,7 @@ def edit_conta(conta_id):
                 user_id=current_user.id,
                 banco=banco,
                 agencia=agencia,
-                conta=conta_num,  # Usando o nome renomeado
+                conta=conta_num,
                 tipo=tipo,
                 saldo_inicial=saldo_inicial,
                 saldo_atual=saldo_atual,
@@ -154,7 +148,7 @@ def edit_conta(conta_id):
 
 @bp_conta_bancaria.route('/delete/<int:conta_id>', methods=['POST'])
 @login_required
-@own_account_required  # Garante que o usuário só deleta suas próprias contas
+@own_account_required
 def delete_conta(conta_id):
     """
     Deleta uma conta bancária. Apenas via POST para segurança.

@@ -1,10 +1,12 @@
+# models/transacao_bancaria_model.py
+
 from database.db_manager import execute_query
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
 
 
 class TransacaoBancaria:
     """
-    Representa uma transa\u00e7\u00e3o banc\u00e1ria de um usu\u00e1rio no sistema.
+    Representa uma transação bancária de um usuário no sistema.
     """
 
     def __init__(self, id, user_id, transacao, tipo):
@@ -16,7 +18,7 @@ class TransacaoBancaria:
     @staticmethod
     def create_table():
         """
-        Cria a tabela 'transacoes_bancarias' no banco de dados se ela ainda n\u00e3o existir.
+        Cria a tabela 'transacoes_bancarias' no banco de dados se ela ainda não existir.
         Inclui uma chave estrangeira para a tabela 'users'.
         """
         query = """
@@ -24,7 +26,7 @@ class TransacaoBancaria:
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             transacao VARCHAR(255) NOT NULL,
-            tipo VARCHAR(50) NOT NULL, -- Op\u00e7\u00f5es: Cr\u00e9dito, D\u00e9bito
+            tipo VARCHAR(50) NOT NULL, -- Opções: Crédito, Débito
             UNIQUE (user_id, transacao, tipo),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
@@ -34,14 +36,13 @@ class TransacaoBancaria:
             print("Tabela 'transacoes_bancarias' verificada/criada com sucesso.")
         except Exception as e:
             print(
-                f"ERRO CR\u00cdTICO ao criar/verificar tabela 'transacoes_bancarias': {e}")
-            # Re-lan\u00e7a a exce\u00e7\u00e3o para impedir a inicializa\u00e7\u00e3o da aplica\u00e7\u00e3o.
+                f"ERRO CRÍTICO ao criar/verificar tabela 'transacoes_bancarias': {e}")
             raise
 
     @classmethod
     def get_all_by_user(cls, user_id):
         """
-        Retorna uma lista de todas as transa\u00e7\u00f5es banc\u00e1rias de um usu\u00e1rio espec\u00edfico.
+        Retorna uma lista de todas as transações bancárias de um usuário específico.
         """
         rows = execute_query(
             "SELECT id, user_id, transacao, tipo FROM transacoes_bancarias WHERE user_id = %s ORDER BY transacao",
@@ -53,7 +54,7 @@ class TransacaoBancaria:
     @classmethod
     def get_by_id(cls, transacao_id, user_id):
         """
-        Retorna uma transa\u00e7\u00e3o banc\u00e1ria pelo seu ID e ID do usu\u00e1rio, garantindo que o usu\u00e1rio \u00e9 o propriet\u00e1rio.
+        Retorna uma transação bancária pelo seu ID e ID do usuário, garantindo que o usuário é o proprietário.
         """
         row = execute_query(
             "SELECT id, user_id, transacao, tipo FROM transacoes_bancarias WHERE id = %s AND user_id = %s",
@@ -65,8 +66,8 @@ class TransacaoBancaria:
     @classmethod
     def add(cls, user_id, transacao, tipo):
         """
-        Adiciona uma nova transa\u00e7\u00e3o banc\u00e1ria ao banco de dados.
-        Levanta ValueError em caso de viola\u00e7\u00e3o de unicidade ou chave estrangeira.
+        Adiciona uma nova transação bancária ao banco de dados.
+        Levanta ValueError em caso de violação de unicidade ou chave estrangeira.
         """
         try:
             result = execute_query(
@@ -80,26 +81,25 @@ class TransacaoBancaria:
             return None
         except UniqueViolation as e:
             raise ValueError(
-                "Erro: J\u00e1 existe uma transa\u00e7\u00e3o banc\u00e1ria com esta combina\u00e7\u00e3o de transa\u00e7\u00e3o e tipo para este usu\u00e1rio."
+                "Erro: Já existe uma transação bancária com esta combinação de transação e tipo para este usuário."
             ) from e
         except ForeignKeyViolation as e:
             raise ValueError(
-                "Erro: Usu\u00e1rio n\u00e3o encontrado. N\u00e3o \u00e9 poss\u00edvel adicionar transa\u00e7\u00e3o banc\u00e1ria."
+                "Erro: Usuário não encontrado. Não é possível adicionar transação bancária."
             ) from e
         except Exception as e:
-            print(f"Erro ao adicionar transa\u00e7\u00e3o banc\u00e1ria: {e}")
+            print(f"Erro ao adicionar transação bancária: {e}")
             raise
 
     @classmethod
     def update(cls, transacao_id, user_id, transacao, tipo):
         """
-        Atualiza as informa\u00e7\u00f5es de uma transa\u00e7\u00e3o banc\u00e1ria existente.
-        Levanta ValueError em caso de viola\u00e7\u00e3o de unicidade ou se a transa\u00e7\u00e3o n\u00e3o for encontrada.
+        Atualiza as informações de uma transação bancária existente.
+        Levanta ValueError em caso de violação de unicidade ou se a transação não for encontrada.
         """
-        # Primeiro, verifica se a transa\u00e7\u00e3o existe e pertence ao usu\u00e1rio
         existing_transacao = cls.get_by_id(transacao_id, user_id)
         if not existing_transacao:
-            return None  # Transa\u00e7\u00e3o n\u00e3o encontrada ou n\u00e3o pertence ao usu\u00e1rio
+            return None
 
         try:
             query = "UPDATE transacoes_bancarias SET transacao = %s, tipo = %s WHERE id = %s AND user_id = %s"
@@ -109,19 +109,18 @@ class TransacaoBancaria:
             return None
         except UniqueViolation as e:
             raise ValueError(
-                "Erro: J\u00e1 existe outra transa\u00e7\u00e3o banc\u00e1ria com esta combina\u00e7\u00e3o de transa\u00e7\u00e3o e tipo para este usu\u00e1rio."
+                "Erro: Já existe outra transação bancária com esta combinação de transação e tipo para este usuário."
             ) from e
         except Exception as e:
-            print(f"Erro ao atualizar transa\u00e7\u00e3o banc\u00e1ria: {e}")
+            print(f"Erro ao atualizar transação bancária: {e}")
             raise
 
     @classmethod
     def delete(cls, transacao_id, user_id):
         """
-        Deleta uma transa\u00e7\u00e3o banc\u00e1ria do banco de dados pelo seu ID e ID do usu\u00e1rio.
-        Retorna True em caso de sucesso, False caso contr\u00e1rio.
+        Deleta uma transação bancária do banco de dados pelo seu ID e ID do usuário.
+        Retorna True em caso de sucesso, False caso contrário.
         """
-        # Garante que apenas o propriet\u00e1rio pode deletar
         query = "DELETE FROM transacoes_bancarias WHERE id = %s AND user_id = %s"
         params = (transacao_id, user_id)
         return execute_query(query, params, commit=True)

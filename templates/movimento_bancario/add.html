@@ -1,3 +1,5 @@
+{# templates\movimento_bancario\add.html #}
+
 {% extends 'base.html' %}
 
 {% block title %}Adicionar Movimento Bancário - Finanças Web{% endblock %}
@@ -6,7 +8,6 @@
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
     <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Novo Movimento Bancário</h2>
     <form method="POST" action="{{ url_for('movimento_bancario.add_movimento') }}">
-        {# NOVO: Adicionado script tag oculta para passar o JSON de forma segura #}
         <script type="application/json" id="transacoes-data">
             {{ transacoes_json_data | safe }}
         </script>
@@ -27,8 +28,7 @@
             <select id="transacao_bancaria_id" name="transacao_bancaria_id" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                 <option value="">Selecione um tipo de transação...</option>
-                {% for transacao_item in transacoes %} {# Renomeado para evitar conflito com 'transacao' objeto do
-                movimento #}
+                {% for transacao_item in transacoes %}
                 <option value="{{ transacao_item.id }}">{{ transacao_item.transacao }} ({{ transacao_item.tipo }})
                 </option>
                 {% endfor %}
@@ -44,18 +44,16 @@
             <input type="text" id="valor_display"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                 placeholder="Ex: 1.500,75 ou -50,00">
-            <input type="hidden" id="valor" name="valor"> {# Campo oculto para o valor numérico puro #}
-            <p id="valor-validation-message" class="text-red-500 text-xs mt-1 hidden"></p> {# Mensagem de validação #}
+            <input type="hidden" id="valor" name="valor"> 
+            <p id="valor-validation-message" class="text-red-500 text-xs mt-1 hidden"></p> 
         </div>
         <div class="mb-6">
             <label for="tipo_movimento_display" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
                 Movimento</label>
-            {# O campo de tipo de movimento agora é somente leitura #}
             <input type="text" id="tipo_movimento_display" name="tipo" readonly value="Receita" {# Valor inicial padrão
                 #}
                 class="w-full px-4 py-2 border border-gray-300 bg-gray-100 rounded-lg focus:outline-none cursor-not-allowed">
-            <input type="hidden" name="tipo_hidden" id="tipo_hidden" value="Receita"> {# Campo oculto para submeter o
-            valor real #}
+            <input type="hidden" name="tipo_hidden" id="tipo_hidden" value="Receita"> 
         </div>
         <div class="flex justify-end space-x-4">
             <a href="{{ url_for('movimento_bancario.list_movimentos') }}"
@@ -73,14 +71,13 @@
 <!-- Script para validar e ajustar valores e tipo de movimento -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const valorDisplayInput = document.getElementById('valor_display'); // Input vis\u00edvel
-        const valorHiddenInput = document.getElementById('valor');           // Input oculto para submiss\u00e3o
+        const valorDisplayInput = document.getElementById('valor_display'); 
+        const valorHiddenInput = document.getElementById('valor');          
         const tipoMovimentoDisplay = document.getElementById('tipo_movimento_display');
         const tipoMovimentoHidden = document.getElementById('tipo_hidden');
         const transacaoBancariaIdSelect = document.getElementById('transacao_bancaria_id');
         const valorValidationMessage = document.getElementById('valor-validation-message');
 
-        // Helper para garantir que a string Base64 tem o padding correto
         function padBase64(base64) {
             const padding = base64.length % 4;
             if (padding === 0) {
@@ -89,38 +86,24 @@
             return base64 + '='.repeat(4 - padding);
         }
 
-        // Leitura do JSON do script tag oculto e descodifica\u00e7\u00e3o Base64
         const jsonScriptTag = document.getElementById('transacoes-data');
         let transacoesData = [];
-        if (jsonScriptTag && jsonScriptTag.textContent) { // Garante que textContent existe
+        if (jsonScriptTag && jsonScriptTag.textContent) { 
             try {
                 let base64StringRaw = jsonScriptTag.textContent;
-                //console.log('Original base64 string from textContent (add.html):', base64StringRaw); // MANTIDO PARA DEBUG
-
-                // Remove TODOS os caracteres de espa\u00e7o em branco
                 const base64StringNoWhitespace = base64StringRaw.replace(/\s/g, '');
-                //console.log('Base64 string after removing whitespace (add.html):', base64StringNoWhitespace); // MANTIDO PARA DEBUG
-
-                // Remove quaisquer caracteres que n\u00e3o s\u00e3o Base64 v\u00e1lidos
                 const base64StringClean = base64StringNoWhitespace.replace(/[^A-Za-z0-9+/=]/g, '');
-                //console.log('Base64 string after removing non-base64 chars (add.html):', base64StringClean); // MANTIDO PARA DEBUG
-
-                // Garante o padding correto para Base64
                 const base64StringPadded = padBase64(base64StringClean);
-                //console.log('Base64 string after padding (add.html):', base64StringPadded); // MANTIDO PARA DEBUG
-
                 if (base64StringPadded) {
-                    const jsonString = atob(base64StringPadded); // Descodifica de Base64
-                    //console.log('JSON string after atob (add.html):', jsonString); // MANTIDO PARA DEBUG
+                    const jsonString = atob(base64StringPadded);
                     transacoesData = JSON.parse(jsonString);
-                    //console.log('Successfully parsed JSON data (add.html):', transacoesData); // MANTIDO PARA DEBUG
                 } else {
                     console.warn('Base64 string is empty after cleaning and padding. No data to parse (add.html).');
                     transacoesData = [];
                 }
             } catch (e) {
                 console.error('Erro ao analisar JSON de transações (add.html):', e, 'String Base64 limpa e preenchida:', base64StringPadded);
-                transacoesData = []; // Garante que \u00e9 um array vazio em caso de erro
+                transacoesData = []; 
             }
         }
 
@@ -129,42 +112,34 @@
             transactionTypesMap[item.id] = { transacao: item.transacao, tipo: item.tipo };
         });
 
-        // Helper para formatar um n\u00famero para exibi\u00e7\u00e3o (ex: 1234.56 -> "1.234,56")
         function formatDisplayValue(number) {
             if (isNaN(number)) return '';
-            // NOVO: Usa toFixed(2) antes de toLocaleString para garantir 2 casas decimais
-            return parseFloat(number).toFixed(2).replace('.', ','); // Converter para string e substituir ponto por v\u00edrgula
+            return parseFloat(number).toFixed(2).replace('.', ','); 
         }
 
-        // Helper para analisar uma string de exibi\u00e7\u00e3o (ex: "1.234,56") em um float (1234.56)
         function parseDisplayValue(valueString) {
             if (!valueString) return NaN;
             valueString = valueString.trim();
 
-            // Remove separadores de milhares e substitui v\u00edrgula decimal por ponto
-            valueString = valueString.replace(/\./g, ''); // Remove pontos de milhar
-            valueString = valueString.replace(/,/g, '.');   // Substitui v\u00edrgula decimal por ponto
+            valueString = valueString.replace(/\./g, ''); 
+            valueString = valueString.replace(/,/g, '.'); 
 
             return parseFloat(valueString);
         }
 
-        // Fun\u00e7\u00e3o para filtrar a entrada do utilizador em tempo real
         function filterInput(inputElement) {
             let value = inputElement.value;
-            // Permite apenas d\u00edgitos, ponto, v\u00edrgula e sinal de menos no in\u00edcio
             let filteredValue = value.replace(/[^0-9.,-]/g, '');
 
-            // Garante que o sinal de menos s\u00f3 aparece no in\u00edcio
             if (filteredValue.indexOf('-') > 0) {
                 filteredValue = filteredValue.replace(/-/g, '');
                 if (value.startsWith('-')) {
                     filteredValue = '-' + filteredValue;
                 }
             }
-            inputElement.value = filteredValue; // Atualiza o valor do input vis\u00edvel com o valor filtrado
+            inputElement.value = filteredValue;
         }
 
-        // Valida o valor para o tipo de transa\u00e7\u00e3o selecionado e ajusta o tipo de movimento
         function validateAndAdjustValor() {
             let numericValue = parseDisplayValue(valorDisplayInput.value);
 
@@ -174,20 +149,18 @@
                 transacaoTipo = transactionTypesMap[selectedTransacaoId].tipo;
             }
 
-            valorValidationMessage.classList.add('hidden'); // Esconde a mensagem por padr\u00e3o
-            valorDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500'); // Remove borda vermelha
+            valorValidationMessage.classList.add('hidden'); 
+            valorDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500'); 
 
             if (isNaN(numericValue)) {
-                // Se n\u00e3o \u00e9 um n\u00famero v\u00e1lido e n\u00e3o \u00e9 vazio ou s\u00f3 h\u00edfen
                 if (valorDisplayInput.value !== '' && valorDisplayInput.value !== '-') {
                     valorValidationMessage.textContent = 'Por favor, insira um valor numérico válido (ex: 1.500,75 ou -50,00).';
                     valorValidationMessage.classList.remove('hidden');
                     valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
                 }
-                numericValue = 0; // Default para 0 se o input n\u00e3o \u00e9 um n\u00famero
+                numericValue = 0; 
             }
 
-            // Aplica a corre\u00e7\u00e3o de sinal e valida\u00e7\u00e3o
             if (transacaoTipo === 'Crédito' && numericValue < 0) {
                 numericValue = Math.abs(numericValue);
                 valorValidationMessage.textContent = 'Para transações de Crédito, o valor deve ser positivo. Valor ajustado.';
@@ -200,16 +173,12 @@
                 valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
             }
 
-            // Atualiza o campo vis\u00edvel com o valor formatado para exibi\u00e7\u00e3o
             valorDisplayInput.value = formatDisplayValue(numericValue);
-            // Atualiza o campo oculto com o valor num\u00e9rico puro para submiss\u00e3o
             valorHiddenInput.value = numericValue.toFixed(2);
 
-            // Ajusta o 'Tipo de Movimento' com base no valor num\u00e9rico final
             adjustTipoMovimento(numericValue >= 0 ? 'Receita' : 'Despesa');
         }
 
-        // Fun\u00e7\u00e3o para ajustar o tipo de movimento (Receita/Despesa)
         function adjustTipoMovimento(forcedType = null) {
             if (forcedType) {
                 tipoMovimentoDisplay.value = forcedType;
@@ -220,42 +189,34 @@
                     tipoMovimentoDisplay.value = valorNumerico >= 0 ? 'Receita' : 'Despesa';
                     tipoMovimentoHidden.value = valorNumerico >= 0 ? 'Receita' : 'Despesa';
                 } else {
-                    // Padr\u00e3o se o valor n\u00e3o for num\u00e9rico (ex: vazio ou apenas '-')
                     tipoMovimentoDisplay.value = 'Receita';
                     tipoMovimentoHidden.value = 'Receita';
                 }
             }
         }
 
-        // Adiciona event listener para o campo de valor no evento 'input' (a cada tecla digitada)
         valorDisplayInput.addEventListener('input', function () {
-            filterInput(this); // Apenas filtra caracteres, n\u00e3o formata aqui
+            filterInput(this);
         });
 
-        // Adiciona event listener para o campo de valor no evento 'blur' (ao sair do campo)
         valorDisplayInput.addEventListener('blur', validateAndAdjustValor);
 
-        // Ao focar, mostra o valor num\u00e9rico limpo para facilitar a edi\u00e7\u00e3o
         valorDisplayInput.addEventListener('focus', function () {
             const currentNumericValue = parseDisplayValue(this.value);
             if (!isNaN(currentNumericValue)) {
-                this.value = currentNumericValue.toString(); // Ex: "1234.56"
+                this.value = currentNumericValue.toString(); 
             } else {
-                this.value = ''; // Limpa se n\u00e3o \u00e9 um n\u00famero v\u00e1lido
+                this.value = ''; 
             }
-            valorValidationMessage.classList.add('hidden'); // Esconde a mensagem de valida\u00e7\u00e3o ao focar
+            valorValidationMessage.classList.add('hidden'); 
             valorDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
         });
 
-        // Adiciona event listener para o campo de tipo de transa\u00e7\u00e3o no evento 'change'
         transacaoBancariaIdSelect.addEventListener('change', function () {
-            validateAndAdjustValor(); // Re-valida o valor atual para o novo tipo de transa\u00e7\u00e3o
+            validateAndAdjustValor(); 
         });
 
-        // Inicializa\u00e7\u00e3o ao carregar a p\u00e1gina:
-        // Pega o valor inicial do Jinja (que vir\u00e1 como "X.XX" do Python),
-        // converte para n\u00famero e formata para exibi\u00e7\u00e3o.
-        const initialRawValue = "{{ '%.2f' | format(0 | float) }}"; // Default para 0.00
+        const initialRawValue = "{{ '%.2f' | format(0 | float) }}"; 
         const initialNumericValue = parseFloat(initialRawValue);
 
         if (!isNaN(initialNumericValue)) {

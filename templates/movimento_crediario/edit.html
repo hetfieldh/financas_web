@@ -1,15 +1,17 @@
+{# templates\movimento_crediario\edit.html #}
+
 {% extends 'base.html' %}
 
-{% block title %}Editar Movimento de Credi\u00e1rio - Finan\u00e7as Web{% endblock %}
+{% block title %}Editar Movimento de Crediário - Finanças Web{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
-    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Editar Movimento de Credi\u00e1rio</h2>
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Editar Movimento de Crediário</h2>
     <form method="POST"
         action="{{ url_for('movimento_crediario.edit_movimento_crediario', movimento_id=movimento.id) }}">
         <div class="mb-5">
             <label for="grupo_crediario_id" class="block text-gray-700 text-sm font-medium mb-2">Grupo de
-                Credi\u00e1rio</label>
+                Crediário</label>
             <select id="grupo_crediario_id" name="grupo_crediario_id" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                 {% for grupo in grupos_crediario %}
@@ -19,7 +21,7 @@
             </select>
         </div>
         <div class="mb-5">
-            <label for="crediario_id" class="block text-gray-700 text-sm font-medium mb-2">Credi\u00e1rio</label>
+            <label for="crediario_id" class="block text-gray-700 text-sm font-medium mb-2">Crediário</label>
             <select id="crediario_id" name="crediario_id" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                 {% for crediario in crediarios %}
@@ -34,10 +36,10 @@
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
         </div>
         <div class="mb-5">
-            <label for="descricao" class="block text-gray-700 text-sm font-medium mb-2">Descri\u00e7\u00e3o</label>
+            <label for="descricao" class="block text-gray-700 text-sm font-medium mb-2">Descrição</label>
             <input type="text" id="descricao" name="descricao" value="{{ movimento.descricao }}" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                placeholder="Ex: Compra de Eletr\u00f4nico, Servi\u00e7o de Manuten\u00e7\u00e3o">
+                placeholder="Ex: Compra de Eletr\u00f4nico, Serviço de Manutenção">
         </div>
         <div class="mb-5">
             <label for="valor_total" class="block text-gray-700 text-sm font-medium mb-2">Valor Total (R$)</label>
@@ -48,7 +50,7 @@
                 placeholder="Ex: 1500,00">
         </div>
         <div class="mb-5">
-            <label for="num_parcelas" class="block text-gray-700 text-sm font-medium mb-2">N\u00famero de Parcelas
+            <label for="num_parcelas" class="block text-gray-700 text-sm font-medium mb-2">Número de Parcelas
                 (1-360)</label>
             <input type="number" id="num_parcelas" name="num_parcelas" value="{{ movimento.num_parcelas }}" required
                 min="1" max="360"
@@ -69,7 +71,7 @@
             </a>
             <button type="submit"
                 class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
-                <i class="fas fa-save mr-2"></i> Salvar Altera\u00e7\u00f5es
+                <i class="fas fa-save mr-2"></i> Salvar Alterações
             </button>
         </div>
     </form>

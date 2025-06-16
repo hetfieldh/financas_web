@@ -1,12 +1,13 @@
+# models/grupo_crediario_model.py
+
 from database.db_manager import execute_query
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
 
 
 class GrupoCrediario:
     """
-    Representa um grupo de credi\u00e1rio de um usu\u00e1rio no sistema.
+    Representa um grupo de crediário de um usuário no sistema.
     """
-
     def __init__(self, id, user_id, grupo, tipo):
         self.id = id
         self.user_id = user_id
@@ -16,15 +17,15 @@ class GrupoCrediario:
     @staticmethod
     def create_table():
         """
-        Cria a tabela 'grupos_crediario' no banco de dados se ela ainda n\u00e3o existir.
-        Inclui chave estrangeira para 'users' e restri\u00e7\u00e3o de unicidade.
+        Cria a tabela 'grupos_crediario' no banco de dados se ela ainda não existir.
+        Inclui chave estrangeira para 'users' e restrição de unicidade.
         """
         query = """
         CREATE TABLE IF NOT EXISTS grupos_crediario (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             grupo VARCHAR(255) NOT NULL,
-            tipo VARCHAR(50) NOT NULL, -- Op\u00e7\u00f5es: Compra, Estorno
+            tipo VARCHAR(50) NOT NULL, -- Opções: Compra, Estorno
             
             UNIQUE (user_id, grupo, tipo),
             
@@ -36,14 +37,13 @@ class GrupoCrediario:
             print("Tabela 'grupos_crediario' verificada/criada com sucesso.")
         except Exception as e:
             print(
-                f"ERRO CR\u00cdTICO ao criar/verificar tabela 'grupos_crediario': {e}")
-            # Re-lan\u00e7a a exce\u00e7\u00e3o para impedir a inicializa\u00e7\u00e3o da aplica\u00e7\u00e3o.
+                f"ERRO CRÍTICO ao criar/verificar tabela 'grupos_crediario': {e}")
             raise
 
     @classmethod
     def get_all_by_user(cls, user_id):
         """
-        Retorna uma lista de todos os grupos de credi\u00e1rio de um usu\u00e1rio espec\u00edfico.
+        Retorna uma lista de todos os grupos de crediário de um usuário específico.
         Ordena por grupo e tipo.
         """
         rows = execute_query(
@@ -56,7 +56,7 @@ class GrupoCrediario:
     @classmethod
     def get_by_id(cls, grupo_id, user_id):
         """
-        Retorna um grupo de credi\u00e1rio pelo seu ID e ID do usu\u00e1rio.
+        Retorna um grupo de crediário pelo seu ID e ID do usuário.
         """
         row = execute_query(
             "SELECT id, user_id, grupo, tipo FROM grupos_crediario WHERE id = %s AND user_id = %s",
@@ -68,8 +68,8 @@ class GrupoCrediario:
     @classmethod
     def add(cls, user_id, grupo, tipo):
         """
-        Adiciona um novo grupo de credi\u00e1rio ao banco de dados.
-        Levanta ValueError em caso de viola\u00e7\u00e3o de unicidade ou chave estrangeira.
+        Adiciona um novo grupo de crediário ao banco de dados.
+        Levanta ValueError em caso de violação de unicidade ou chave estrangeira.
         """
         try:
             result = execute_query(
@@ -83,25 +83,25 @@ class GrupoCrediario:
             return None
         except UniqueViolation as e:
             raise ValueError(
-                "Erro: J\u00e1 existe um grupo de credi\u00e1rio com esta combina\u00e7\u00e3o de grupo e tipo para este usu\u00e1rio."
+                "Erro: Já existe um grupo de crediário com esta combinação de grupo e tipo para este usuário."
             ) from e
         except ForeignKeyViolation as e:
             raise ValueError(
-                "Erro: Usu\u00e1rio n\u00e3o encontrado. N\u00e3o \u00e9 poss\u00edvel adicionar grupo de credi\u00e1rio."
+                "Erro: Usuário não encontrado. Não é possível adicionar grupo de crediário."
             ) from e
         except Exception as e:
-            print(f"Erro ao adicionar grupo de credi\u00e1rio: {e}")
+            print(f"Erro ao adicionar grupo de crediário: {e}")
             raise
 
     @classmethod
     def update(cls, grupo_id, user_id, grupo, tipo):
         """
-        Atualiza as informa\u00e7\u00f5es de um grupo de credi\u00e1rio existente.
-        Levanta ValueError em caso de viola\u00e7\u00e3o de unicidade ou se o grupo n\u00e3o for encontrado.
+        Atualiza as informações de um grupo de crediário existente.
+        Levanta ValueError em caso de violação de unicidade ou se o grupo não for encontrado.
         """
         existing_grupo = cls.get_by_id(grupo_id, user_id)
         if not existing_grupo:
-            return None  # Grupo n\u00e3o encontrado ou n\u00e3o pertence ao usu\u00e1rio
+            return None
 
         try:
             query = "UPDATE grupos_crediario SET grupo = %s, tipo = %s WHERE id = %s AND user_id = %s"
@@ -111,17 +111,17 @@ class GrupoCrediario:
             return None
         except UniqueViolation as e:
             raise ValueError(
-                "Erro: J\u00e1 existe outro grupo de credi\u00e1rio com esta combina\u00e7\u00e3o de grupo e tipo para este usu\u00e1rio."
+                "Erro: Já existe outro grupo de crediário com esta combinação de grupo e tipo para este usuário."
             ) from e
         except Exception as e:
-            print(f"Erro ao atualizar grupo de credi\u00e1rio: {e}")
+            print(f"Erro ao atualizar grupo de crediário: {e}")
             raise
 
     @classmethod
     def delete(cls, grupo_id, user_id):
         """
-        Deleta um grupo de credi\u00e1rio do banco de dados.
-        Retorna True em caso de sucesso, False caso contr\u00e1rio.
+        Deleta um grupo de crediário do banco de dados.
+        Retorna True em caso de sucesso, False caso contrário.
         """
         query = "DELETE FROM grupos_crediario WHERE id = %s AND user_id = %s"
         params = (grupo_id, user_id)

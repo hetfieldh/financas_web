@@ -1,6 +1,8 @@
+{# templates\despesa_fixa\edit.html #}
+
 {% extends 'base.html' %}
 
-{% block title %}Editar Despesa Fixa - Finan\u00e7as Web{% endblock %}
+{% block title %}Editar Despesa Fixa - Finanças Web{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
@@ -18,7 +20,7 @@
             </select>
         </div>
         <div class="mb-5">
-            <label for="mes_ano" class="block text-gray-700 text-sm font-medium mb-2">M\u00eas/Ano (AAAA-MM)</label>
+            <label for="mes_ano" class="block text-gray-700 text-sm font-medium mb-2">Mês/Ano (AAAA-MM)</label>
             <input type="month" id="mes_ano" name="mes_ano" value="{{ mes_ano_str }}" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
         </div>
@@ -37,7 +39,7 @@
             </a>
             <button type="submit"
                 class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
-                <i class="fas fa-save mr-2"></i> Salvar Altera\u00e7\u00f5es
+                <i class="fas fa-save mr-2"></i> Salvar Alterações
             </button>
         </div>
     </form>

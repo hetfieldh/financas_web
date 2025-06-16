@@ -1,6 +1,8 @@
+{# templates\despesa_fixa\add.html #}
+
 {% extends 'base.html' %}
 
-{% block title %}Adicionar Despesa Fixa - Finan\u00e7as Web{% endblock %}
+{% block title %}Adicionar Despesa Fixa - Finanças Web{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
@@ -17,7 +19,7 @@
             </select>
         </div>
         <div class="mb-5">
-            <label for="mes_ano" class="block text-gray-700 text-sm font-medium mb-2">M\u00eas/Ano (AAAA-MM)</label>
+            <label for="mes_ano" class="block text-gray-700 text-sm font-medium mb-2">Mês/Ano (AAAA-MM)</label>
             <input type="month" id="mes_ano" name="mes_ano" value="{{ current_month_year }}" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
         </div>

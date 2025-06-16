@@ -1,12 +1,12 @@
+{# templates\includes\_navbar.html #}
+
 <nav class="bg-gradient-to-r from-indigo-600 to-purple-700 p-1 shadow-md">
     <div class="w-full px-4 mx-auto flex justify-between items-center max-w-7xl">
-        <!-- Logotipo da Aplicação -->
         <a href="{{ url_for('usuario.home') }}" class="text-white text-2xl font-bold tracking-tight flex items-center">
             <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Finanças Web" class="h-10 mr-1">
             <span class="hidden sm:inline">Finanças Web</span>
         </a>
 
-        <!-- Menu de Navegação (Hidden on small screens, shown on medium and up) -->
         <div class="hidden md:flex items-center space-x-1">
             <a href="{{ url_for('usuario.home') }}"
                 class="text-white text-sm hover:text-indigo-100 transition duration-200 px-3 py-2 rounded-md">
@@ -14,14 +14,12 @@
             </a>
 
             {% if current_user.is_authenticated %}
-            <!-- Dropdown de Cadastros (apenas para admin) -->
             <div class="relative group pb-1">
                 <button
                     class="text-white text-sm hover:text-indigo-100 transition duration-200 px-9 py-1 rounded-md flex items-center focus:outline-none">
                     <i class="fas fa-file-alt mr-1"></i> Cadastros <i
                         class="fas fa-caret-down ml-2 group-hover:rotate-180 transition-transform duration-200"></i>
                 </button>
-                <!-- Mudadas as classes para invisible, opacity-0 e transições suaves -->
                 <div
                     class="absolute invisible opacity-0 group-hover:visible group-hover:opacity-100 bg-indigo-700 text-white rounded-md shadow-lg min-w-[160px] z-10 top-full left-0 transition-all duration-200 ease-out pt-2">
 
@@ -62,7 +60,6 @@
                 </div>
             </div>
 
-            <!-- Dropdown de Movimentações -->
             <div class="relative group pb-1">
                 <button
                     class="text-white text-sm hover:text-indigo-100 transition duration-200 px-3 py-2 rounded-md flex items-center focus:outline-none">
@@ -80,7 +77,6 @@
                         class="block px-4 py-2 text-xs hover:bg-indigo-600 rounded-md transition duration-200">
                         <i class="fas fa-file-invoice-dollar mr-1"></i> Crediário
                     </a>
-                    <!-- Futuras expansões de Movimentações aqui -->
                 </div>
             </div>
 
@@ -111,7 +107,6 @@
             {% endif %}
         </div>
 
-        <!-- Mobile Menu Button (Hamburger) -->
         <div class="md:hidden">
             <button id="mobile-menu-button" class="text-white focus:outline-none">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -123,7 +118,6 @@
         </div>
     </div>
 
-    <!-- Mobile Menu (initially hidden) -->
     <div id="mobile-menu" class="hidden md:hidden bg-indigo-700 mt-4 rounded-b-lg shadow-md">
         <ul class="flex flex-col space-y-2 p-4">
             <li>
@@ -134,7 +128,6 @@
             </li>
             {% if current_user.is_authenticated %}
             {% if current_user.is_admin %}
-            <!-- Item de Cadastros para Mobile com submenu -->
             <li>
                 <button
                     class="mobile-dropdown-toggle w-full text-left text-white text-xs hover:text-indigo-100 transition duration-200 py-2 px-3 rounded-md flex items-center justify-between focus:outline-none">
@@ -149,14 +142,12 @@
                             <i class="fas fa-user-friends mr-1"></i> Usuário
                         </a>
                     </li>
-                    <!-- NOVO ITEM: Conta Bancária para Mobile -->
                     <li>
                         <a href="{{ url_for('conta_bancaria.list_contas') }}"
                             class="block text-white text-xs hover:bg-indigo-600 transition duration-200 py-2 px-3 rounded-md">
                             <i class="fas fa-university mr-1"></i> Conta Bancária
                         </a>
                     </li>
-                    <!-- Futuras expansões de cadastro aqui -->
                 </ul>
             </li>
             {% endif %}
@@ -199,7 +190,6 @@
             });
         }
 
-        // Toggle do dropdown de Cadastros no menu mobile
         const mobileDropdownToggles = document.querySelectorAll('.mobile-dropdown-toggle');
         mobileDropdownToggles.forEach(toggle => {
             toggle.addEventListener('click', function () {
@@ -208,7 +198,7 @@
 
                 if (dropdownContent) {
                     dropdownContent.classList.toggle('hidden');
-                    arrowIcon.classList.toggle('rotate-180'); // Gira a seta
+                    arrowIcon.classList.toggle('rotate-180'); 
                 }
             });
         });

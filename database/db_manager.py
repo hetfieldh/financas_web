@@ -1,3 +1,4 @@
+# database/db_manager.py
 import psycopg
 from psycopg.errors import OperationalError, UniqueViolation, UndefinedTable
 from config import Config
@@ -11,7 +12,6 @@ def get_db_connection():
     """
     db_config = Config.DATABASE
     try:
-        # Tenta conectar ao banco de dados com as credenciais fornecidas.
         conn = psycopg.connect(
             dbname=db_config['dbname'],
             user=db_config['user'],
@@ -21,12 +21,10 @@ def get_db_connection():
         )
         return conn
     except OperationalError as e:
-        # Captura erros de operação (ex: credenciais inválidas, banco não disponível).
         print(f"Erro ao conectar ao PostgreSQL: {e}")
         raise RuntimeError(
             "Não foi possível conectar ao banco de dados. Verifique as configurações e o status do PostgreSQL.") from e
     except Exception as e:
-        # Captura quaisquer outros erros inesperados durante a conexão.
         print(f"Erro inesperado ao tentar conectar ao banco de dados: {e}")
         raise RuntimeError(
             "Erro inesperado ao conectar ao banco de dados.") from e
@@ -43,20 +41,19 @@ def get_db_cursor(commit=False):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # O cursor é retornado para ser usado dentro do bloco 'with'.
         yield cursor
         if commit:
-            conn.commit()  # Commita as alterações se 'commit' for True.
+            conn.commit()
     except Exception as e:
         if conn:
-            conn.rollback()  # Reverte as alterações em caso de erro.
+            conn.rollback()
         print(f"Erro na transação do banco de dados: {e}")
-        raise  # Re-lança a exceção para que o chamador possa tratá-la.
+        raise
     finally:
         if cursor:
-            cursor.close()  # Garante que o cursor seja fechado.
+            cursor.close()
         if conn:
-            conn.close()  # Garante que a conexão seja fechada.
+            conn.close()
 
 
 def execute_query(query, params=None, fetchone=False, fetchall=False, commit=False):
@@ -83,15 +80,12 @@ def execute_query(query, params=None, fetchone=False, fetchall=False, commit=Fal
             elif fetchall:
                 return cursor.fetchall()
             else:
-                # Retorna True para operações de inserção/atualização/deleção bem-sucedidas.
                 return True
     except OperationalError as e:
         print(f"Erro de operação no banco de dados: {e}")
-        # Retorna False para erros que impedem a operação (ex: banco offline).
         return False
     except UniqueViolation as e:
         print(f"Erro de violação de unicidade: {e}")
-        # Re-lança a exceção com uma mensagem mais amigável, útil para validação.
         raise ValueError(
             "Violação de unicidade de dados. Este registro já existe.") from e
     except Exception as e:

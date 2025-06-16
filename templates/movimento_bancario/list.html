@@ -1,3 +1,5 @@
+{# templates\movimento_bancario\list.html #}
+
 {% extends 'base.html' %}
 
 {% block title %}Meus Movimentos Bancários - Finanças Web{% endblock %}
@@ -72,9 +74,9 @@
                             class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-200">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        {# Bot\u00e3o de Deletar agora usa JavaScript para enviar POST #}
                         <button type="button"
-                            onclick="confirmDelete('{{ url_for('movimento_bancario.delete_movimento', movimento_id=movimento.id)}}');"
+                            data-delete-url="{{ url_for('movimento_bancario.delete_movimento', movimento_id=movimento.id) }}"
+                            onclick="confirmDelete(this.dataset.deleteUrl)"
                             class="text-red-600 hover:text-red-900 transition duration-200 cursor-pointer">
                             <i class="fas fa-trash-alt"></i> Deletar
                         </button>
@@ -97,22 +99,21 @@
         if (confirm('Tem certeza que deseja deletar este movimento bancário?')) {
             fetch(deleteUrl, {
                 method: 'POST',
-                // Incluir um CSRF token aqui seria uma boa pr\u00e1tica para produ\u00e7\u00e3o
                 headers: {
                     'Content-Type': 'application/json'
                 }
             })
                 .then(response => {
                     if (response.ok) {
-                        window.location.reload(); // Recarrega a p\u00e1gina para atualizar a lista
+                        window.location.reload();
                     } else {
-                        alert('Erro ao deletar o movimento banc\u00e1rio.');
+                        alert('Erro ao deletar o movimento bancário.');
                         console.error('Erro de resposta do servidor:', response.statusText);
                     }
                 })
                 .catch(error => {
-                    alert('Erro ao comunicar com o servidor para deletar o movimento banc\u00e1rio.');
-                    console.error('Erro na requisi\u00e7\u00e3o de delete:', error);
+                    alert('Erro ao comunicar com o servidor para deletar o movimento bancário.');
+                    console.error('Erro na requisição de delete:', error);
                 });
         }
     }

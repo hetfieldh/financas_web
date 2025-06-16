@@ -1,10 +1,14 @@
+# models/conta_bancaria_model.py
+
 from database.db_manager import execute_query
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
+
 
 class ContaBancaria:
     """
     Representa uma conta bancária de um usuário no sistema.
     """
+
     def __init__(self, id, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite):
         self.id = id
         self.user_id = user_id
@@ -41,8 +45,9 @@ class ContaBancaria:
             execute_query(query, commit=True)
             print("Tabela 'contas_bancarias' verificada/criada com sucesso.")
         except Exception as e:
-            print(f"ERRO CRÍTICO ao criar/verificar tabela 'contas_bancarias': {e}")
-            raise # Re-lança a exceção para impedir a inicialização da aplicação.
+            print(
+                f"ERRO CRÍTICO ao criar/verificar tabela 'contas_bancarias': {e}")
+            raise
 
     @classmethod
     def get_all_by_user(cls, user_id):
@@ -77,7 +82,8 @@ class ContaBancaria:
         try:
             result = execute_query(
                 "INSERT INTO contas_bancarias (user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-                (user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite),
+                (user_id, banco, agencia, conta, tipo,
+                 saldo_inicial, saldo_atual, limite),
                 fetchone=True,
                 commit=True
             )
@@ -102,14 +108,14 @@ class ContaBancaria:
         Atualiza as informações de uma conta bancária existente.
         Levanta ValueError em caso de violação de unicidade ou se a conta não for encontrada.
         """
-        # Primeiro, verifica se a conta existe e pertence ao usuário
         existing_conta = cls.get_by_id(conta_id, user_id)
         if not existing_conta:
-            return None # Conta não encontrada ou não pertence ao usuário
+            return None
 
         try:
             query = "UPDATE contas_bancarias SET banco = %s, agencia = %s, conta = %s, tipo = %s, saldo_inicial = %s, saldo_atual = %s, limite = %s WHERE id = %s AND user_id = %s"
-            params = (banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite, conta_id, user_id)
+            params = (banco, agencia, conta, tipo, saldo_inicial,
+                      saldo_atual, limite, conta_id, user_id)
             if execute_query(query, params, commit=True):
                 return cls(conta_id, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite)
             return None
@@ -127,7 +133,6 @@ class ContaBancaria:
         Deleta uma conta bancária do banco de dados pelo seu ID e ID do usuário.
         Retorna True em caso de sucesso, False caso contrário.
         """
-        # Garante que apenas o proprietário pode deletar
         query = "DELETE FROM contas_bancarias WHERE id = %s AND user_id = %s"
         params = (conta_id, user_id)
         return execute_query(query, params, commit=True)

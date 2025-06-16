@@ -1,21 +1,21 @@
+# routes/crediario_routes.py
+
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required, current_user
 from models.crediario_model import Crediario
 from functools import wraps
 from decimal import Decimal
 
-# Cria um Blueprint para organizar as rotas relacionadas a credi\u00e1rios
 bp_crediario = Blueprint('crediario', __name__, url_prefix='/crediarios')
 
-# Defini\u00e7\u00f5es de tipos de credi\u00e1rio para o formul\u00e1rio
-TIPOS_CREDIARIO = ["F\u00edsico", "Virtual Recorrente",
-                   "Virtual Tempor\u00e1rio", "Outro"]
+TIPOS_CREDIARIO = ["Físico", "Virtual Recorrente",
+                   "Virtual Temporário", "Outro"]
 
 
 def own_crediario_required(f):
     """
-    Decorador personalizado para garantir que o usu\u00e1rio est\u00e1 acessando ou modificando
-    seu pr\u00f3prio item de credi\u00e1rio.
+    Decorador personalizado para garantir que o usuário está acessando ou modificando
+    seu próprio item de crediário.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -23,7 +23,8 @@ def own_crediario_required(f):
         if crediario_id:
             crediario = Crediario.get_by_id(crediario_id, current_user.id)
             if not crediario:
-                flash('Item de credi\u00e1rio n\u00e3o encontrado ou voc\u00ea n\u00e3o tem permiss\u00e3o para acess\u00e1-lo.', 'danger')
+                flash(
+                    'Item de crediário não encontrado ou você não tem permissão para acessá-lo.', 'danger')
                 return redirect(url_for('crediario.list_crediarios'))
         return f(*args, **kwargs)
     return decorated_function
@@ -33,7 +34,7 @@ def own_crediario_required(f):
 @login_required
 def list_crediarios():
     """
-    Lista todos os itens de credi\u00e1rio do usu\u00e1rio logado.
+    Lista todos os itens de crediário do usuário logado.
     """
     crediarios = Crediario.get_all_by_user(current_user.id)
     return render_template('crediario/list.html', crediarios=crediarios)
@@ -43,26 +44,23 @@ def list_crediarios():
 @login_required
 def add_crediario():
     """
-    Adiciona um novo item de credi\u00e1rio para o usu\u00e1rio logado.
+    Adiciona um novo item de crediário para o usuário logado.
     """
     if request.method == 'POST':
-        # Renomeado para evitar conflito com 'crediario' objeto
         crediario_desc = request.form.get('crediario')
         tipo = request.form.get('tipo')
         final_str = request.form.get('final')
-        limite_str = request.form.get('limite').replace(
-            ',', '.')  # Substitui v\u00edrgula por ponto
+        limite_str = request.form.get('limite').replace(',', '.')
 
         try:
             final = int(final_str)
             limite = Decimal(limite_str)
 
-            # Valida\u00e7\u00f5es adicionais
             if not crediario_desc:
-                flash('O campo "Credi\u00e1rio" n\u00e3o pode ser vazio.', 'danger')
+                flash('O campo "Crediário" não pode ser vazio.', 'danger')
                 return render_template('crediario/add.html', TIPOS_CREDIARIO=TIPOS_CREDIARIO)
             if tipo not in TIPOS_CREDIARIO:
-                flash('Tipo de credi\u00e1rio inv\u00e1lido.', 'danger')
+                flash('Tipo de crediário inválido.', 'danger')
                 return render_template('crediario/add.html', TIPOS_CREDIARIO=TIPOS_CREDIARIO)
 
             Crediario.add(
@@ -72,30 +70,29 @@ def add_crediario():
                 final=final,
                 limite=limite
             )
-            flash('Item de credi\u00e1rio adicionado com sucesso!', 'success')
+            flash('Item de crediário adicionado com sucesso!', 'success')
             return redirect(url_for('crediario.list_crediarios'))
         except ValueError as e:
-            flash(f'Erro de valida\u00e7\u00e3o: {e}', 'danger')
+            flash(f'Erro de validação: {e}', 'danger')
         except Exception as e:
             flash(
-                f'Ocorreu um erro ao adicionar o item de credi\u00e1rio: {e}', 'danger')
+                f'Ocorreu um erro ao adicionar o item de crediário: {e}', 'danger')
             current_app.logger.error(
-                f"Erro ao adicionar credi\u00e1rio: {e}", exc_info=True)
+                f"Erro ao adicionar crediário: {e}", exc_info=True)
 
     return render_template('crediario/add.html', TIPOS_CREDIARIO=TIPOS_CREDIARIO)
 
 
 @bp_crediario.route('/edit/<int:crediario_id>', methods=['GET', 'POST'])
 @login_required
-# Garante que o usu\u00e1rio s\u00f3 edita seus pr\u00f3prios credi\u00e1rios
 @own_crediario_required
 def edit_crediario(crediario_id):
     """
-    Edita um item de credi\u00e1rio existente.
+    Edita um item de crediário existente.
     """
     crediario = Crediario.get_by_id(crediario_id, current_user.id)
     if not crediario:
-        flash('Item de credi\u00e1rio n\u00e3o encontrado.', 'danger')
+        flash('Item de crediário não encontrado.', 'danger')
         return redirect(url_for('crediario.list_crediarios'))
 
     if request.method == 'POST':
@@ -109,10 +106,10 @@ def edit_crediario(crediario_id):
             limite = Decimal(limite_str)
 
             if not crediario_desc:
-                flash('O campo "Credi\u00e1rio" n\u00e3o pode ser vazio.', 'danger')
+                flash('O campo "Crediário" não pode ser vazio.', 'danger')
                 return render_template('crediario/edit.html', crediario=crediario, TIPOS_CREDIARIO=TIPOS_CREDIARIO)
             if tipo not in TIPOS_CREDIARIO:
-                flash('Tipo de credi\u00e1rio inv\u00e1lido.', 'danger')
+                flash('Tipo de crediário inválido.', 'danger')
                 return render_template('crediario/edit.html', crediario=crediario, TIPOS_CREDIARIO=TIPOS_CREDIARIO)
 
             updated_crediario = Crediario.update(
@@ -124,31 +121,30 @@ def edit_crediario(crediario_id):
                 limite=limite
             )
             if updated_crediario:
-                flash('Item de credi\u00e1rio atualizado com sucesso!', 'success')
+                flash('Item de crediário atualizado com sucesso!', 'success')
                 return redirect(url_for('crediario.list_crediarios'))
             else:
-                flash('Erro ao atualizar item de credi\u00e1rio.', 'danger')
+                flash('Erro ao atualizar item de crediário.', 'danger')
         except ValueError as e:
-            flash(f'Erro de valida\u00e7\u00e3o: {e}', 'danger')
+            flash(f'Erro de validação: {e}', 'danger')
         except Exception as e:
             flash(
-                f'Ocorreu um erro ao atualizar o item de credi\u00e1rio: {e}', 'danger')
+                f'Ocorreu um erro ao atualizar o item de crediário: {e}', 'danger')
             current_app.logger.error(
-                f"Erro ao atualizar credi\u00e1rio ID {crediario_id}: {e}", exc_info=True)
+                f"Erro ao atualizar crediário ID {crediario_id}: {e}", exc_info=True)
 
     return render_template('crediario/edit.html', crediario=crediario, TIPOS_CREDIARIO=TIPOS_CREDIARIO)
 
 
 @bp_crediario.route('/delete/<int:crediario_id>', methods=['POST'])
 @login_required
-# Garante que o usu\u00e1rio s\u00f3 deleta seus pr\u00f3prios credi\u00e1rios
 @own_crediario_required
 def delete_crediario(crediario_id):
     """
-    Deleta um item de credi\u00e1rio. Apenas via POST para seguran\u00e7a.
+    Deleta um item de crediário. Apenas via POST para segurança.
     """
     if Crediario.delete(crediario_id, current_user.id):
-        flash('Item de credi\u00e1rio deletado com sucesso!', 'success')
+        flash('Item de crediário deletado com sucesso!', 'success')
     else:
-        flash('Erro ao deletar item de credi\u00e1rio.', 'danger')
+        flash('Erro ao deletar item de crediário.', 'danger')
     return redirect(url_for('crediario.list_crediarios'))

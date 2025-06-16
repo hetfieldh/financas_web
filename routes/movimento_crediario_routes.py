@@ -1,3 +1,5 @@
+# routes/movimento_crediario_routes.py
+
 import json
 import base64
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
@@ -9,15 +11,14 @@ from functools import wraps
 from datetime import datetime, date
 from decimal import Decimal
 
-# Cria um Blueprint para organizar as rotas relacionadas a movimentos de credi\u00e1rio
 bp_movimento_crediario = Blueprint(
     'movimento_crediario', __name__, url_prefix='/movimentos_crediario')
 
 
 def own_movement_crediario_required(f):
     """
-    Decorador personalizado para garantir que o usu\u00e1rio est\u00e1 acessando ou modificando
-    seu pr\u00f3prio movimento de credi\u00e1rio.
+    Decorador personalizado para garantir que o usuário está acessando ou modificando
+    seu próprio movimento de crediário.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -26,7 +27,8 @@ def own_movement_crediario_required(f):
             movimento = MovimentoCrediario.get_by_id(
                 movimento_id, current_user.id)
             if not movimento:
-                flash('Movimento de credi\u00e1rio n\u00e3o encontrado ou voc\u00ea n\u00e3o tem permiss\u00e3o para acess\u00e1-lo.', 'danger')
+                flash(
+                    'Movimento de crediário não encontrado ou você não tem permissão para acessá-lo.', 'danger')
                 return redirect(url_for('movimento_crediario.list_movimentos_crediario'))
         return f(*args, **kwargs)
     return decorated_function
@@ -36,8 +38,8 @@ def own_movement_crediario_required(f):
 @login_required
 def list_movimentos_crediario():
     """
-    Lista todos os movimentos de credi\u00e1rio do usu\u00e1rio logado.
-    Para exibir detalhes do grupo e credi\u00e1rio, buscamos os objetos completos.
+    Lista todos os movimentos de crediário do usuário logado.
+    Para exibir detalhes do grupo e crediário, buscamos os objetos completos.
     """
     movimentos = MovimentoCrediario.get_all_by_user(current_user.id)
     for mov in movimentos:
@@ -45,7 +47,6 @@ def list_movimentos_crediario():
             mov.grupo_crediario_id, current_user.id)
         mov.crediario_detalhes = Crediario.get_by_id(
             mov.crediario_id, current_user.id)
-        # Formata as datas para exibi\u00e7\u00e3o
         mov.data_compra_formatada = mov.data_compra.strftime(
             '%d/%m/%Y') if mov.data_compra else ''
         mov.primeira_parcela_formatada = mov.primeira_parcela.strftime(
@@ -60,19 +61,18 @@ def list_movimentos_crediario():
 @login_required
 def add_movimento_crediario():
     """
-    Adiciona um novo movimento de credi\u00e1rio para o usu\u00e1rio logado.
+    Adiciona um novo movimento de crediário para o usuário logado.
     """
     grupos_crediario = GrupoCrediario.get_all_by_user(current_user.id)
     crediarios = Crediario.get_all_by_user(current_user.id)
 
-    # Prepara a data de hoje para o valor predefinido do campo de data
-    today_date = date.today().isoformat()  # Formato 'YYYY-MM-DD'
+    today_date = date.today().isoformat()  
 
     if not grupos_crediario:
-        flash('Precisa de registar pelo menos um Grupo de Credi\u00e1rio antes de adicionar um movimento.', 'warning')
+        flash('Precisa de registar pelo menos um Grupo de Crediário antes de adicionar um movimento.', 'warning')
         return redirect(url_for('grupo_crediario.add_grupo_crediario'))
     if not crediarios:
-        flash('Precisa de registar pelo menos um Credi\u00e1rio antes de adicionar um movimento.', 'warning')
+        flash('Precisa de registar pelo menos um Crediário antes de adicionar um movimento.', 'warning')
         return redirect(url_for('crediario.add_crediario'))
 
     if request.method == 'POST':
@@ -93,7 +93,7 @@ def add_movimento_crediario():
 
             if num_parcelas <= 0 or num_parcelas > 360:
                 raise ValueError(
-                    "O n\u00famero de parcelas deve ser entre 1 e 360.")
+                    "O número de parcelas deve ser entre 1 e 360.")
             if valor_total <= 0:
                 raise ValueError("O valor total deve ser maior que zero.")
 
@@ -108,15 +108,15 @@ def add_movimento_crediario():
                 primeira_parcela=primeira_parcela
             )
 
-            flash('Movimento de credi\u00e1rio adicionado com sucesso!', 'success')
+            flash('Movimento de crediário adicionado com sucesso!', 'success')
             return redirect(url_for('movimento_crediario.list_movimentos_crediario'))
         except ValueError as e:
-            flash(f'Erro de valida\u00e7\u00e3o: {e}', 'danger')
+            flash(f'Erro de validação: {e}', 'danger')
         except Exception as e:
             flash(
-                f'Ocorreu um erro ao adicionar o movimento de credi\u00e1rio: {e}', 'danger')
+                f'Ocorreu um erro ao adicionar o movimento de crediário: {e}', 'danger')
             current_app.logger.error(
-                f"Erro ao adicionar movimento de credi\u00e1rio: {e}", exc_info=True)
+                f"Erro ao adicionar movimento de crediário: {e}", exc_info=True)
 
     return render_template('movimento_crediario/add.html',
                            grupos_crediario=grupos_crediario,
@@ -126,31 +126,29 @@ def add_movimento_crediario():
 
 @bp_movimento_crediario.route('/edit/<int:movimento_id>', methods=['GET', 'POST'])
 @login_required
-# Garante que o usu\u00e1rio s\u00f3 edita seus pr\u00f3prios movimentos
 @own_movement_crediario_required
 def edit_movimento_crediario(movimento_id):
     """
-    Edita um movimento de credi\u00e1rio existente.
+    Edita um movimento de crediário existente.
     """
     movimento = MovimentoCrediario.get_by_id(movimento_id, current_user.id)
     if not movimento:
-        flash('Movimento de credi\u00e1rio n\u00e3o encontrado.', 'danger')
+        flash('Movimento de crediário não encontrado.', 'danger')
         return redirect(url_for('movimento_crediario.list_movimentos_crediario'))
 
     grupos_crediario = GrupoCrediario.get_all_by_user(current_user.id)
     crediarios = Crediario.get_all_by_user(current_user.id)
 
-    # Formata as datas para o valor predefinido do campo de data
     data_compra_str = movimento.data_compra.strftime(
         '%Y-%m-%d') if isinstance(movimento.data_compra, (datetime, date)) else ''
     primeira_parcela_str = movimento.primeira_parcela.strftime(
         '%Y-%m-%d') if isinstance(movimento.primeira_parcela, (datetime, date)) else ''
 
     if not grupos_crediario:
-        flash('Precisa de registar pelo menos um Grupo de Credi\u00e1rio.', 'warning')
+        flash('Precisa de registar pelo menos um Grupo de Crediário.', 'warning')
         return redirect(url_for('grupo_crediario.add_grupo_crediario'))
     if not crediarios:
-        flash('Precisa de registar pelo menos um Credi\u00e1rio.', 'warning')
+        flash('Precisa de registar pelo menos um Crediário.', 'warning')
         return redirect(url_for('crediario.add_crediario'))
 
     if request.method == 'POST':
@@ -171,7 +169,7 @@ def edit_movimento_crediario(movimento_id):
 
             if num_parcelas <= 0 or num_parcelas > 360:
                 raise ValueError(
-                    "O n\u00famero de parcelas deve ser entre 1 e 360.")
+                    "O número de parcelas deve ser entre 1 e 360.")
             if valor_total <= 0:
                 raise ValueError("O valor total deve ser maior que zero.")
 
@@ -187,17 +185,17 @@ def edit_movimento_crediario(movimento_id):
                 primeira_parcela=primeira_parcela
             )
             if updated_movimento:
-                flash('Movimento de credi\u00e1rio atualizado com sucesso!', 'success')
+                flash('Movimento de crediário atualizado com sucesso!', 'success')
                 return redirect(url_for('movimento_crediario.list_movimentos_crediario'))
             else:
-                flash('Erro ao atualizar movimento de credi\u00e1rio.', 'danger')
+                flash('Erro ao atualizar movimento de crediário.', 'danger')
         except ValueError as e:
-            flash(f'Erro de valida\u00e7\u00e3o: {e}', 'danger')
+            flash(f'Erro de validação: {e}', 'danger')
         except Exception as e:
             flash(
-                f'Ocorreu um erro ao atualizar o movimento de credi\u00e1rio: {e}', 'danger')
+                f'Ocorreu um erro ao atualizar o movimento de crediário: {e}', 'danger')
             current_app.logger.error(
-                f"Erro ao atualizar movimento de credi\u00e1rio ID {movimento_id}: {e}", exc_info=True)
+                f"Erro ao atualizar movimento de crediário ID {movimento_id}: {e}", exc_info=True)
 
     return render_template('movimento_crediario/edit.html',
                            movimento=movimento,
@@ -209,14 +207,13 @@ def edit_movimento_crediario(movimento_id):
 
 @bp_movimento_crediario.route('/delete/<int:movimento_id>', methods=['POST'])
 @login_required
-# Garante que o usu\u00e1rio s\u00f3 deleta seus pr\u00f3prios movimentos
 @own_movement_crediario_required
 def delete_movimento_crediario(movimento_id):
     """
-    Deleta um movimento de credi\u00e1rio. Apenas via POST para seguran\u00e7a.
+    Deleta um movimento de crediário. Apenas via POST para segurança.
     """
     if MovimentoCrediario.delete(movimento_id, current_user.id):
-        flash('Movimento de credi\u00e1rio deletado com sucesso!', 'success')
+        flash('Movimento de crediário deletado com sucesso!', 'success')
     else:
-        flash('Erro ao deletar movimento de credi\u00e1rio.', 'danger')
+        flash('Erro ao deletar movimento de crediário.', 'danger')
     return redirect(url_for('movimento_crediario.list_movimentos_crediario'))
