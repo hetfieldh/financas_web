@@ -97,8 +97,6 @@ class MovimentoBancario:
             movimento_id = result[0] if result else None
 
             if movimento_id:
-                # Atualiza o saldo_atual da conta bancária
-                # O cálculo do saldo agora é feito diretamente na query de update para atomicidade.
                 if tipo == 'Receita':
                     update_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
                 else:
@@ -149,8 +147,8 @@ class MovimentoBancario:
                           existing_movimento.conta_bancaria_id, user_id), commit=False)
 
             query = "UPDATE movimentos_bancarios SET conta_bancaria_id = %s, transacao_bancaria_id = %s, data = %s, valor = %s, tipo = %s WHERE id = %s AND user_id = %s"
-            params = (conta_bancaria_id, transacao_bancaria_id, data,
-                      valor, tipo, movimento_id, user_id)  # Corrigido aqui
+            params = (conta_bancaria_id, transacao_bancaria_id,
+                      data, valor, tipo, movimento_id, user_id)
             update_mov_success = execute_query(query, params, commit=False)
 
             if not update_mov_success:

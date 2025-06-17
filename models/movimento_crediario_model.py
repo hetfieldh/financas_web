@@ -205,7 +205,6 @@ class MovimentoCrediario:
         Retorna os movimentos de crediário de um usuário para um crediário específico
         e dentro de um determinado mês e ano.
         """
-        # Define o início e o fim do mês para a consulta
         start_of_month = date(year, month, 1)
         if month == 12:
             end_of_month_exclusive = date(year + 1, 1, 1)
@@ -221,13 +220,6 @@ class MovimentoCrediario:
           AND (primeira_parcela < %s OR ultima_parcela >= %s) -- Inclui movimentos que iniciam antes ou terminam dentro do período
         ORDER BY data_compra DESC;
         """
-        # A lógica para filtrar movimentos de crediário por mês é um pouco mais complexa
-        # do que um simples "data_compra" dentro do mês. Um movimento de crediário
-        # (compra parcelada) se estende por vários meses.
-        # A consulta acima busca movimentos cuja primeira parcela está antes do final do mês
-        # OU cuja última parcela está depois do início do mês.
-        # Isso significa que o movimento está "ativo" em algum ponto do mês selecionado.
-
         rows = execute_query(
             query,
             (user_id, crediario_id, end_of_month_exclusive, start_of_month),
