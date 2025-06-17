@@ -2,11 +2,11 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Adicionar Transação Bancária - Finanças Web{% endblock %}
+{% block title %}Finanças Web | Transação Bancária{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
-    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Nova Transação Bancária</h2>
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Transação Bancária</h2>
     <form method="POST" action="{{ url_for('transacao_bancaria.add_transacao') }}">
         <div class="mb-5">
             <label for="transacao" class="block text-gray-700 text-sm font-medium mb-2">Transação</label>
@@ -18,6 +18,7 @@
             <label for="tipo" class="block text-gray-700 text-sm font-medium mb-2">Tipo de Transação</label>
             <select id="tipo" name="tipo" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                <option value="">Selecione...</option>
                 {% for tipo_opcao in TIPOS_TRANSACAO %}
                 <option value="{{ tipo_opcao }}">{{ tipo_opcao }}</option>
                 {% endfor %}

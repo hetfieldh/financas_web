@@ -2,11 +2,11 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Meus Movimentos de Crediário - Finanças Web{% endblock %}
+{% block title %}Finanças Web | Movimento Crediário{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-auto max-w-full lg:max-w-7xl">
-    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Meus Movimentos de Crediário</h1>
+    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Movimentos de Crediário</h1>
 
     <div class="mb-6 text-right">
         <a href="{{ url_for('movimento_crediario.add_movimento_crediario') }}"
@@ -26,8 +26,8 @@
                         class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo
                     </th>
                     <th scope="col"
-                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Crediário</th>
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crediário
+                    </th>
                     <th scope="col"
                         class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data
                         Compra</th>

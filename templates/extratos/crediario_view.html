@@ -1,7 +1,7 @@
 {# templates/extratos/crediario_view.html #}
 {% extends "base.html" %}
 
-{% block title %}Extrato Crediário - {{ crediario.crediario }} ({{ mes_ano_formatado }}){% endblock %}
+{% block title %}Finanças Web | Extrato Crediário{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -47,7 +47,7 @@
                         </th>
                         <th scope="col"
                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Valor Parcela Mensal
+                            R$ Parcela
                         </th>
                         <th scope="col"
                             class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -75,10 +75,10 @@
                             {{ movimento.num_parcelas }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ movimento.primeira_parcela.strftime('%m/%Y') }} {# Alterado para Mês/Ano #}
+                            {{ movimento.primeira_parcela.strftime('%m/%Y') }} 
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ movimento.ultima_parcela.strftime('%m/%Y') }} {# Alterado para Mês/Ano #}
+                            {{ movimento.ultima_parcela.strftime('%m/%Y') }} 
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
                             R$ {{ "%.2f"|format(movimento.valor_parcela_mensal) }}

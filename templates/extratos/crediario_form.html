@@ -1,7 +1,7 @@
 {# templates/extratos/crediario_form.html #}
 {% extends "base.html" %}
 
-{% block title %}Extrato Crediário - Seleção{% endblock %}
+{% block title %}Finanças Web | Extrato Crediário{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -25,7 +25,7 @@
                 <label for="crediario_id" class="block text-sm font-medium text-gray-700 mb-1">Crediário</label>
                 <select name="crediario_id" id="crediario_id" required
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <option value="">Selecione um Crediário</option>
+                    <option value="">Selecione...</option>
                     {% for crediario_item in crediarios %}
                         <option value="{{ crediario_item.id }}">{{ crediario_item.crediario }} - Final: {{ crediario_item.final }}</option>
                     {% endfor %}

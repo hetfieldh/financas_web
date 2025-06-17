@@ -2,17 +2,18 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Adicionar Movimento de Crediário - Finanças Web{% endblock %}
+{% block title %}Finanças Web | Movimento Crediário{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
-    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Novo Movimento de Crediário</h2>
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Movimento de Crediário</h2>
     <form method="POST" action="{{ url_for('movimento_crediario.add_movimento_crediario') }}">
         <div class="mb-5">
             <label for="grupo_crediario_id" class="block text-gray-700 text-sm font-medium mb-2">Grupo de
                 Crediário</label>
             <select id="grupo_crediario_id" name="grupo_crediario_id" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                <option value="">Selecione...</option>
                 {% for grupo in grupos_crediario %}
                 <option value="{{ grupo.id }}">{{ grupo.grupo }} ({{ grupo.tipo }})</option>
                 {% endfor %}
@@ -22,6 +23,7 @@
             <label for="crediario_id" class="block text-gray-700 text-sm font-medium mb-2">Crediário</label>
             <select id="crediario_id" name="crediario_id" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                <option value="">Selecione...</option>
                 {% for crediario in crediarios %}
                 <option value="{{ crediario.id }}">{{ crediario.crediario }} (Final: {{ crediario.final }})</option>
                 {% endfor %}
@@ -43,14 +45,14 @@
             <input type="text" id="valor_total" name="valor_total" required pattern="[0-9]+([,\.][0-9]{1,2})?"
                 inputmode="decimal"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                placeholder="Ex: 1500,00" value="0,00">
+                placeholder="Ex: 1500,00" value="">
         </div>
         <div class="mb-5">
             <label for="num_parcelas" class="block text-gray-700 text-sm font-medium mb-2">Número de Parcelas
                 (1-360)</label>
             <input type="number" id="num_parcelas" name="num_parcelas" required min="1" max="360"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                placeholder="Ex: 12" value="1">
+                placeholder="Ex: 12" value="">
         </div>
         <div class="mb-6">
             <label for="primeira_parcela" class="block text-gray-700 text-sm font-medium mb-2">Mês/Ano da Primeira
