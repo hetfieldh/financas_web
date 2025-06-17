@@ -198,3 +198,39 @@ class MovimentoCrediario:
         query = "DELETE FROM movimentos_crediario WHERE id = %s AND user_id = %s"
         params = (movimento_id, user_id)
         return execute_query(query, params, commit=True)
+
+    @classmethod
+    def get_by_crediario_and_month(cls, user_id, crediario_id, year, month):
+        """
+        Retorna os movimentos de crediário de um usuário para um crediário específico
+        e dentro de um determinado mês e ano.
+        """
+        # Define o início e o fim do mês para a consulta
+        start_of_month = date(year, month, 1)
+        if month == 12:
+            end_of_month_exclusive = date(year + 1, 1, 1)
+        else:
+            end_of_month_exclusive = date(year, month + 1, 1)
+
+        query = """
+        SELECT id, user_id, grupo_crediario_id, crediario_id, data_compra, descricao, 
+               valor_total, num_parcelas, primeira_parcela, ultima_parcela, valor_parcela_mensal
+        FROM movimentos_crediario 
+        WHERE user_id = %s 
+          AND crediario_id = %s 
+          AND (primeira_parcela < %s OR ultima_parcela >= %s) -- Inclui movimentos que iniciam antes ou terminam dentro do período
+        ORDER BY data_compra DESC;
+        """
+        # A lógica para filtrar movimentos de crediário por mês é um pouco mais complexa
+        # do que um simples "data_compra" dentro do mês. Um movimento de crediário
+        # (compra parcelada) se estende por vários meses.
+        # A consulta acima busca movimentos cuja primeira parcela está antes do final do mês
+        # OU cuja última parcela está depois do início do mês.
+        # Isso significa que o movimento está "ativo" em algum ponto do mês selecionado.
+
+        rows = execute_query(
+            query,
+            (user_id, crediario_id, end_of_month_exclusive, start_of_month),
+            fetchall=True
+        )
+        return [cls(*row) for row in rows] if rows else []
