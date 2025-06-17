@@ -70,9 +70,11 @@
                     </td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900 text-right">R$ {{ "%.2f" |
                         format(mov.valor_parcela_mensal | float) }}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.primeira_parcela_formatada }}
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{
+                        mov.primeira_parcela.strftime('%m/%Y') }}
                     </td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.ultima_parcela_formatada }}
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{
+                        mov.ultima_parcela.strftime('%m/%Y') }}
                     </td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm font-medium">
                         <a href="{{ url_for('movimento_crediario.edit_movimento_crediario', movimento_id=mov.id) }}"

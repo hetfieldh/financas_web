@@ -5,6 +5,7 @@ from psycopg.errors import UniqueViolation, ForeignKeyViolation
 from decimal import Decimal
 from datetime import date
 from dateutil.relativedelta import relativedelta
+from models.parcela_crediario_model import ParcelaCrediario
 
 
 class MovimentoCrediario:
@@ -117,7 +118,8 @@ class MovimentoCrediario:
     def add(cls, user_id, grupo_crediario_id, crediario_id, data_compra, descricao,
             valor_total, num_parcelas, primeira_parcela):
         """
-        Adiciona um novo movimento de crediário e calcula os campos derivados.
+        Adiciona um novo movimento de crediário, calcula os campos derivados
+        e gera as parcelas associadas.
         """
         try:
             ultima_parcela, valor_parcela_mensal = cls._calculate_derived_fields(
@@ -134,7 +136,23 @@ class MovimentoCrediario:
                 commit=True
             )
             if result:
-                return cls(result[0], user_id, grupo_crediario_id, crediario_id, data_compra,
+                movimento_id_inserido = result[0]
+
+                for i in range(num_parcelas):
+                    data_vencimento_parcela_dt = primeira_parcela + \
+                        relativedelta(months=i)
+                    vencimento_mes = data_vencimento_parcela_dt.month
+                    vencimento_ano = data_vencimento_parcela_dt.year
+
+                    ParcelaCrediario.add(
+                        movimento_crediario_id=movimento_id_inserido,
+                        numero_parcela=i + 1,
+                        vencimento_mes=vencimento_mes,
+                        vencimento_ano=vencimento_ano,
+                        valor_parcela=valor_parcela_mensal
+                    )
+
+                return cls(movimento_id_inserido, user_id, grupo_crediario_id, crediario_id, data_compra,
                            descricao, valor_total, num_parcelas, primeira_parcela, ultima_parcela, valor_parcela_mensal)
             return None
         except UniqueViolation as e:
@@ -153,7 +171,8 @@ class MovimentoCrediario:
     def update(cls, movimento_id, user_id, grupo_crediario_id, crediario_id, data_compra, descricao,
                valor_total, num_parcelas, primeira_parcela):
         """
-        Atualiza um movimento de crediário existente e recalcula os campos derivados.
+        Atualiza um movimento de crediário existente, recalcula os campos derivados
+        e atualiza as parcelas associadas (deletando e recriando).
         """
         existing_movimento = cls.get_by_id(movimento_id, user_id)
         if not existing_movimento:
@@ -174,6 +193,21 @@ class MovimentoCrediario:
                       valor_parcela_mensal, movimento_id, user_id)
 
             if execute_query(query, params, commit=True):
+                ParcelaCrediario.delete_by_movimento_id(movimento_id)
+
+                for i in range(num_parcelas):
+                    data_vencimento_parcela_dt = primeira_parcela + \
+                        relativedelta(months=i)
+                    vencimento_mes = data_vencimento_parcela_dt.month
+                    vencimento_ano = data_vencimento_parcela_dt.year
+
+                    ParcelaCrediario.add(
+                        movimento_crediario_id=movimento_id,
+                        numero_parcela=i + 1,
+                        vencimento_mes=vencimento_mes,
+                        vencimento_ano=vencimento_ano,
+                        valor_parcela=valor_parcela_mensal
+                    )
                 return cls(movimento_id, user_id, grupo_crediario_id, crediario_id, data_compra,
                            descricao, valor_total, num_parcelas, primeira_parcela, ultima_parcela, valor_parcela_mensal)
             return None
@@ -192,7 +226,7 @@ class MovimentoCrediario:
     @classmethod
     def delete(cls, movimento_id, user_id):
         """
-        Deleta um movimento de crediário do banco de dados.
+        Deleta um movimento de crediário do banco de dados e suas parcelas associadas.
         Retorna True em caso de sucesso, False caso contrário.
         """
         query = "DELETE FROM movimentos_crediario WHERE id = %s AND user_id = %s"
@@ -217,7 +251,7 @@ class MovimentoCrediario:
         FROM movimentos_crediario 
         WHERE user_id = %s 
           AND crediario_id = %s 
-          AND (primeira_parcela < %s OR ultima_parcela >= %s) -- Inclui movimentos que iniciam antes ou terminam dentro do período
+          AND (primeira_parcela < %s OR ultima_parcela >= %s)
         ORDER BY data_compra DESC;
         """
         rows = execute_query(

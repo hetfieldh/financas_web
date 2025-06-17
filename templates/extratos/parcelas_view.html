@@ -1,0 +1,78 @@
+{# templates/extratos/parcelas_view.html #}
+{% extends "base.html" %}
+
+{% block title %}Parcelas do Crediário - {{ movimento.descricao }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white p-6 rounded-lg shadow-xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">Detalhes do Movimento e Parcelas</h1>
+
+        <div class="mb-8 p-4 bg-gray-50 rounded-lg shadow-inner">
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">Movimento de Crediário: {{ movimento.descricao }}</h2>
+            <p class="text-gray-600"><strong>Crediário:</strong> {{ movimento.crediario }} - Final: {{
+                movimento.crediario_final if movimento.crediario_final is defined else 'N/A' }}</p>
+            <p class="text-gray-600"><strong>Grupo Crediário:</strong> {{ movimento.grupo_crediario }}</p>
+            <p class="text-gray-600"><strong>Data da Compra:</strong> {{ movimento.data_compra.strftime('%d/%m/%Y') }}
+            </p>
+            <p class="text-gray-600"><strong>Valor Total:</strong> R$ {{ "%.2f"|format(movimento.valor_total) }}</p>
+            <p class="text-gray-600"><strong>Número de Parcelas:</strong> {{ movimento.num_parcelas }}</p>
+            <p class="text-gray-600"><strong>Valor da Parcela Mensal:</strong> R$ {{
+                "%.2f"|format(movimento.valor_parcela_mensal) }}</p>
+            <p class="text-gray-600"><strong>Primeira Parcela:</strong> {{
+                movimento.primeira_parcela.strftime('%m/%Y') }}</p>
+            <p class="text-gray-600"><strong>Última Parcela:</strong> {{ movimento.ultima_parcela.strftime('%m/%Y')
+                }}</p>
+        </div>
+
+        <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Parcelas</h3>
+
+        {% if parcelas %}
+        <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Nº Parcela
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Vencimento (Mês/Ano)
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Valor da Parcela
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for parcela in parcelas %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ parcela.numero_parcela }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ "%02d/%s"|format(parcela.vencimento_mes, parcela.vencimento_ano) }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                            R$ {{ "%.2f"|format(parcela.valor_parcela) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-gray-600 py-8">Nenhuma parcela encontrada para este movimento.</p>
+        {% endif %}
+
+        <div class="mt-8 text-center">
+            <a href="{{ url_for('extratos_crediario.crediario_view', crediario_id=movimento.crediario_id, mes_ano=movimento.data_compra.strftime('%Y-%m')) }}"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-arrow-left mr-2"></i> Voltar para o Extrato
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

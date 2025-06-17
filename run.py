@@ -18,6 +18,7 @@ from models.grupo_crediario_model import GrupoCrediario
 from models.movimento_crediario_model import MovimentoCrediario
 from models.despesa_receita_model import DespesaReceita
 from models.despesa_fixa_model import DespesaFixa
+from models.parcela_crediario_model import ParcelaCrediario
 
 # Importa as ROTAS
 from routes.usuario_routes import bp_usuario
@@ -109,6 +110,7 @@ def create_app():
             MovimentoCrediario.create_table()
             DespesaReceita.create_table()
             DespesaFixa.create_table()
+            ParcelaCrediario.create_table()
             app._db_initialized = True
             # --- REMOVIDO: Bloco de criação automática do usuário admin ---
             # if not Usuario.get_by_login('admin'):
