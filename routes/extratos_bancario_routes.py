@@ -8,10 +8,11 @@ from models.transacao_bancaria_model import TransacaoBancaria
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 
-bp_extratos = Blueprint('extratos', __name__, url_prefix='/extratos')
+bp_extratos_bancario = Blueprint(
+    'extratos_bancario', __name__, url_prefix='/extratos_bancario')
 
 
-@bp_extratos.route('/bancario_form', methods=['GET', 'POST'])
+@bp_extratos_bancario.route('/bancario_form', methods=['GET', 'POST'])
 @login_required
 def bancario_form():
     """
@@ -45,20 +46,20 @@ def bancario_form():
         if not conta_id or not mes_ano_selecionado:
             flash(
                 'Por favor, selecione uma Conta Bancária e um Mês/Ano.', 'danger')
-            return redirect(url_for('extratos.bancario_form'))
+            return redirect(url_for('extratos_bancario.bancario_form'))
 
         conta_selecionada = ContaBancaria.get_by_id(conta_id, current_user.id)
         if not conta_selecionada:
             flash(
                 'Conta bancária inválida ou não pertence a você.', 'danger')
-            return redirect(url_for('extratos.bancario_form'))
+            return redirect(url_for('extratos_bancario.bancario_form'))
 
-        return redirect(url_for('extratos.bancario_view', conta_id=conta_id, mes_ano=mes_ano_selecionado))
+        return redirect(url_for('extratos_bancario.bancario_view', conta_id=conta_id, mes_ano=mes_ano_selecionado))
 
     return render_template('extratos/bancario_form.html', contas=contas, meses_anos=unique_meses_anos)
 
 
-@bp_extratos.route('/bancario_view/<int:conta_id>/<string:mes_ano>', methods=['GET'])
+@bp_extratos_bancario.route('/bancario_view/<int:conta_id>/<string:mes_ano>', methods=['GET'])
 @login_required
 def bancario_view(conta_id, mes_ano):
     """
@@ -68,14 +69,14 @@ def bancario_view(conta_id, mes_ano):
     conta = ContaBancaria.get_by_id(conta_id, current_user.id)
     if not conta:
         flash('Conta bancária não encontrada ou você não tem permissão para acessá-la.', 'danger')
-        return redirect(url_for('extratos.bancario_form'))
+        return redirect(url_for('extratos_bancario.bancario_form'))
 
     try:
         data_extrato_dt = datetime.strptime(mes_ano, '%Y-%m')
         mes_ano_formatado = data_extrato_dt.strftime('%m/%Y')
     except ValueError:
         flash('Formato de mês/ano inválido.', 'danger')
-        return redirect(url_for('extratos.bancario_form'))
+        return redirect(url_for('extratos_bancario.bancario_form'))
 
     start_of_month = data_extrato_dt.date()
     if data_extrato_dt.month == 12:

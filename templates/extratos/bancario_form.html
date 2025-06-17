@@ -7,7 +7,7 @@
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
     <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Gerar Extrato Bancário</h2>
-    <form method="POST" action="{{ url_for('extratos.bancario_form') }}">
+    <form method="POST" action="{{ url_for('extratos_bancario.bancario_form') }}">
         <div class="mb-5">
             <label for="conta_id" class="block text-gray-700 text-sm font-medium mb-2">Conta Bancária</label>
             <select id="conta_id" name="conta_id" required

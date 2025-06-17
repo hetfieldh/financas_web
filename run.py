@@ -29,7 +29,7 @@ from routes.grupo_crediario_routes import bp_grupo_crediario
 from routes.movimento_crediario_routes import bp_movimento_crediario
 from routes.despesa_receita_routes import bp_despesa_receita
 from routes.despesa_fixa_routes import bp_despesa_fixa
-from routes.extratos_routes import bp_extratos
+from routes.extratos_bancario_routes import bp_extratos_bancario
 from routes.extratos_crediario_routes import bp_extratos_crediario
 
 # Configuração de logging
@@ -69,7 +69,7 @@ def create_app():
     app.register_blueprint(bp_movimento_crediario)
     app.register_blueprint(bp_despesa_receita)
     app.register_blueprint(bp_despesa_fixa)
-    app.register_blueprint(bp_extratos)
+    app.register_blueprint(bp_extratos_bancario)
     app.register_blueprint(bp_extratos_crediario)
 
     @app.template_filter('strftime')
