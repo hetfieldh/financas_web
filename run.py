@@ -19,6 +19,7 @@ from models.movimento_crediario_model import MovimentoCrediario
 from models.despesa_receita_model import DespesaReceita
 from models.despesa_fixa_model import DespesaFixa
 from models.parcela_crediario_model import ParcelaCrediario
+from models.renda_model import Renda
 
 # Importa as ROTAS
 from routes.usuario_routes import bp_usuario
@@ -32,6 +33,7 @@ from routes.despesa_receita_routes import bp_despesa_receita
 from routes.despesa_fixa_routes import bp_despesa_fixa
 from routes.extratos_bancario_routes import bp_extratos_bancario
 from routes.extratos_crediario_routes import bp_extratos_crediario
+from routes.renda_routes import bp_renda
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO,
@@ -72,6 +74,7 @@ def create_app():
     app.register_blueprint(bp_despesa_fixa)
     app.register_blueprint(bp_extratos_bancario)
     app.register_blueprint(bp_extratos_crediario)
+    app.register_blueprint(bp_renda)
 
     @app.template_filter('strftime')
     def format_datetime(value, format="%d/%m/%Y"):
@@ -111,6 +114,7 @@ def create_app():
             DespesaReceita.create_table()
             DespesaFixa.create_table()
             ParcelaCrediario.create_table()
+            Renda.create_table()
             app._db_initialized = True
             # --- REMOVIDO: Bloco de criação automática do usuário admin ---
             # if not Usuario.get_by_login('admin'):
