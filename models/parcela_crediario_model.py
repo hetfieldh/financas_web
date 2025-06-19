@@ -40,7 +40,7 @@ class ParcelaCrediario:
             
             CHECK (numero_parcela >= 1),
             CHECK (vencimento_mes >= 1 AND vencimento_mes <= 12),
-            CHECK (vencimento_ano >= 2000 AND vencimento_ano <= 2100) -- Exemplo de range de ano
+            CHECK (vencimento_ano >= 2000 AND vencimento_ano <= 2100)
         );
         """
         try:
@@ -92,6 +92,21 @@ class ParcelaCrediario:
         except Exception as e:
             print(f"Erro ao adicionar parcela de crediário: {e}")
             raise
+
+    @staticmethod
+    def delete_by_movimento_id(movimento_crediario_id):
+        """
+        Deleta todas as parcelas associadas a um movimento de crediário específico.
+        Retorna True se a operação foi bem sucedida, False caso contrário.
+        """
+        query = """
+            DELETE FROM parcelas_crediario WHERE movimento_crediario_id = %s;
+        """
+        try:
+            return execute_query(query, (movimento_crediario_id,), commit=True)
+        except Exception as e:
+            print(f"Erro ao deletar parcelas de crediário por movimento: {e}")
+            return False
 
     @classmethod
     def delete(cls, parcela_id):

@@ -6,6 +6,7 @@ from decimal import Decimal
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from models.parcela_crediario_model import ParcelaCrediario
+from calendar import monthrange
 
 
 class MovimentoCrediario:
@@ -138,17 +139,22 @@ class MovimentoCrediario:
             if result:
                 movimento_id_inserido = result[0]
 
+                dia_base_parcela = data_compra.day
+
                 for i in range(num_parcelas):
-                    data_vencimento_parcela_dt = primeira_parcela + \
-                        relativedelta(months=i)
-                    vencimento_mes = data_vencimento_parcela_dt.month
-                    vencimento_ano = data_vencimento_parcela_dt.year
+                    mes_parcela = primeira_parcela.month + i
+                    ano_parcela = primeira_parcela.year + \
+                        (mes_parcela - 1) // 12
+                    mes_parcela = (mes_parcela - 1) % 12 + 1
+
+                    max_dia_mes = monthrange(ano_parcela, mes_parcela)[1]
+                    dia_ajustado = min(dia_base_parcela, max_dia_mes)
 
                     ParcelaCrediario.add(
                         movimento_crediario_id=movimento_id_inserido,
                         numero_parcela=i + 1,
-                        vencimento_mes=vencimento_mes,
-                        vencimento_ano=vencimento_ano,
+                        vencimento_mes=mes_parcela,
+                        vencimento_ano=ano_parcela,
                         valor_parcela=valor_parcela_mensal
                     )
 
@@ -193,19 +199,26 @@ class MovimentoCrediario:
                       valor_parcela_mensal, movimento_id, user_id)
 
             if execute_query(query, params, commit=True):
-                ParcelaCrediario.delete_by_movimento_id(movimento_id)
+                if not ParcelaCrediario.delete_by_movimento_id(movimento_id):
+                    raise Exception(
+                        "Falha ao deletar parcelas existentes para o movimento de crediário.")
+
+                dia_base_parcela = data_compra.day
 
                 for i in range(num_parcelas):
-                    data_vencimento_parcela_dt = primeira_parcela + \
-                        relativedelta(months=i)
-                    vencimento_mes = data_vencimento_parcela_dt.month
-                    vencimento_ano = data_vencimento_parcela_dt.year
+                    mes_parcela = primeira_parcela.month + i
+                    ano_parcela = primeira_parcela.year + \
+                        (mes_parcela - 1) // 12
+                    mes_parcela = (mes_parcela - 1) % 12 + 1
+
+                    max_dia_mes = monthrange(ano_parcela, mes_parcela)[1]
+                    dia_ajustado = min(dia_base_parcela, max_dia_mes)
 
                     ParcelaCrediario.add(
                         movimento_crediario_id=movimento_id,
                         numero_parcela=i + 1,
-                        vencimento_mes=vencimento_mes,
-                        vencimento_ano=vencimento_ano,
+                        vencimento_mes=mes_parcela,
+                        vencimento_ano=ano_parcela,
                         valor_parcela=valor_parcela_mensal
                     )
                 return cls(movimento_id, user_id, grupo_crediario_id, crediario_id, data_compra,
@@ -226,7 +239,9 @@ class MovimentoCrediario:
     @classmethod
     def delete(cls, movimento_id, user_id):
         """
-        Deleta um movimento de crediário do banco de dados e suas parcelas associadas.
+        Deleta um movimento de crediário do banco de dados.
+        As parcelas associadas serão deletadas automaticamente pelo ON DELETE CASCADE
+        definido na chave estrangeira em 'parcelas_crediario'.
         Retorna True em caso de sucesso, False caso contrário.
         """
         query = "DELETE FROM movimentos_crediario WHERE id = %s AND user_id = %s"
@@ -251,7 +266,7 @@ class MovimentoCrediario:
         FROM movimentos_crediario 
         WHERE user_id = %s 
           AND crediario_id = %s 
-          AND (primeira_parcela < %s OR ultima_parcela >= %s)
+          AND (primeira_parcela < %s OR ultima_parcela >= %s) 
         ORDER BY data_compra DESC;
         """
         rows = execute_query(
