@@ -60,7 +60,7 @@ class MovimentoBancario:
         """
         rows = execute_query(
             "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo "
-            "FROM movimentos_bancarios WHERE user_id = %s ORDER BY data DESC",
+            "FROM movimentos_bancarios WHERE user_id = %s ORDER BY data DESC, conta_bancaria_id",
             (user_id,),
             fetchall=True
         )

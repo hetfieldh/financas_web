@@ -50,8 +50,7 @@
         <div class="mb-6">
             <label for="tipo_movimento_display" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
                 Movimento</label>
-            <input type="text" id="tipo_movimento_display" name="tipo" readonly value="Receita" {# Valor inicial padrão
-                #}
+            <input type="text" id="tipo_movimento_display" name="tipo" readonly value="Receita"
                 class="w-full px-4 py-2 border border-gray-300 bg-gray-100 rounded-lg focus:outline-none cursor-not-allowed">
             <input type="hidden" name="tipo_hidden" id="tipo_hidden" value="Receita">
         </div>
@@ -158,7 +157,6 @@
                     valorValidationMessage.classList.remove('hidden');
                     valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
                 }
-                numericValue = 0;
             }
 
             if (transacaoTipo === 'Crédito' && numericValue < 0) {
@@ -216,16 +214,6 @@
             validateAndAdjustValor();
         });
 
-        const initialRawValue = "{{ '%.2f' | format(0 | float) }}";
-        const initialNumericValue = parseFloat(initialRawValue);
-
-        if (!isNaN(initialNumericValue)) {
-            valorDisplayInput.value = formatDisplayValue(initialNumericValue);
-            valorHiddenInput.value = initialNumericValue.toFixed(2);
-        } else {
-            valorDisplayInput.value = formatDisplayValue(0);
-            valorHiddenInput.value = "0.00";
-        }
         adjustTipoMovimento(parseFloat(valorHiddenInput.value) >= 0 ? 'Receita' : 'Despesa');
     });
 </script>
