@@ -47,7 +47,7 @@ class DespesaReceita:
         Ordena por despesa_receita e tipo.
         """
         rows = execute_query(
-            "SELECT id, user_id, despesa_receita, tipo FROM despesas_receitas WHERE user_id = %s ORDER BY despesa_receita, tipo",
+            "SELECT id, user_id, despesa_receita, tipo FROM despesas_receitas WHERE user_id = %s ORDER BY tipo DESC, despesa_receita",
             (user_id,),
             fetchall=True
         )

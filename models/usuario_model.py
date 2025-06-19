@@ -62,7 +62,7 @@ class Usuario(UserMixin):
     @classmethod
     def get_all(cls):
         rows = execute_query(
-            "SELECT id, name, email, login, password_hash, is_admin, is_active FROM users ORDER BY name", fetchall=True)
+            "SELECT id, name, email, login, password_hash, is_admin, is_active FROM users ORDER BY is_admin DESC, name", fetchall=True)
         return [cls(*row) for row in rows] if rows else []
 
     @classmethod

@@ -55,7 +55,7 @@ class ContaBancaria:
         Retorna uma lista de todas as contas bancárias de um usuário específico.
         """
         rows = execute_query(
-            "SELECT id, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite FROM contas_bancarias WHERE user_id = %s ORDER BY banco, agencia, conta",
+            "SELECT id, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite FROM contas_bancarias WHERE user_id = %s ORDER BY banco, tipo",
             (user_id,),
             fetchall=True
         )

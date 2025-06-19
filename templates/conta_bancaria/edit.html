@@ -7,29 +7,30 @@
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
     <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Editar Conta Bancária</h2>
-    <form method="POST" action="{{ url_for('conta_bancaria.edit_conta', conta_id=conta.id) }}">
+    <form method="POST" action="{{ url_for('conta_bancaria.edit_conta', conta_id=conta.id) }}"
+        onsubmit="return validateForm()">
         <div class="mb-5">
             <label for="banco" class="block text-gray-700 text-sm font-medium mb-2">Banco</label>
-            <input type="text" id="banco" name="banco" value="{{ conta.banco }}" required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+            <input type="text" id="banco" name="banco" value="{{ conta.banco }}" required readonly
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 bg-gray-100 cursor-not-allowed"
                 placeholder="Nome do Banco">
         </div>
         <div class="mb-5">
             <label for="agencia" class="block text-gray-700 text-sm font-medium mb-2">Agência (4
                 dígitos)</label>
-            <input type="text" id="agencia" name="agencia" value="{{ conta.agencia }}" required maxlength="4"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+            <input type="text" id="agencia" name="agencia" value="{{ conta.agencia }}" required maxlength="4" readonly
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 bg-gray-100 cursor-not-allowed"
                 placeholder="Número da Agência">
         </div>
         <div class="mb-5">
             <label for="conta" class="block text-gray-700 text-sm font-medium mb-2">Conta</label>
-            <input type="text" id="conta" name="conta" value="{{ conta.conta }}" required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+            <input type="text" id="conta" name="conta" value="{{ conta.conta }}" required readonly
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 bg-gray-100 cursor-not-allowed"
                 placeholder="Número da Conta">
         </div>
         <div class="mb-5">
             <label for="tipo" class="block text-gray-700 text-sm font-medium mb-2">Tipo de Conta</label>
-            <select id="tipo" name="tipo" required
+            <select id="tipo" name="tipo" required onchange="handleTipoChange()"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                 {% for tipo_opcao in TIPOS_CONTA %}
                 <option value="{{ tipo_opcao }}" {% if tipo_opcao==conta.tipo %}selected{% endif %}>{{ tipo_opcao }}
@@ -41,14 +42,16 @@
             <label for="saldo_inicial" class="block text-gray-700 text-sm font-medium mb-2">Saldo Inicial (R$)</label>
             <input type="text" id="saldo_inicial" name="saldo_inicial"
                 value="{{ '%.2f' | format(conta.saldo_inicial | float) }}" required pattern="[0-9]+([,\.][0-9]{1,2})?"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                readonly
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 bg-gray-100 cursor-not-allowed"
                 placeholder="Ex: 1000,00">
         </div>
         <div class="mb-5">
             <label for="saldo_atual" class="block text-gray-700 text-sm font-medium mb-2">Saldo Atual (R$)</label>
             <input type="text" id="saldo_atual" name="saldo_atual"
                 value="{{ '%.2f' | format(conta.saldo_atual | float) }}" required pattern="[0-9]+([,\.][0-9]{1,2})?"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                readonly
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 bg-gray-100 cursor-not-allowed"
                 placeholder="Ex: 1000,00">
         </div>
         <div class="mb-6">
@@ -70,4 +73,42 @@
         </div>
     </form>
 </div>
+
+<script>
+    function handleTipoChange() {
+        const tipoSelect = document.getElementById('tipo');
+        const limiteInput = document.getElementById('limite');
+        const selectedTipo = tipoSelect.value;
+
+        if (selectedTipo === "Corrente" || selectedTipo === "Digital") {
+            limiteInput.disabled = false;
+            limiteInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        } else {
+            limiteInput.value = '0,00';
+            limiteInput.disabled = true;
+            limiteInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+        }
+    }
+
+    function validateForm() {
+        const tipoSelect = document.getElementById('tipo');
+        const limiteInput = document.getElementById('limite');
+        const selectedTipo = tipoSelect.value;
+        let limiteValue = parseFloat(limiteInput.value.replace(',', '.')) || 0;
+
+        if (selectedTipo !== "Corrente" && selectedTipo !== "Digital" && limiteValue > 0) {
+            alert('Contas do tipo Poupança, Restituições, Vendas, Serviços e Outros não podem ter limite. O limite será definido como R$ 0,00.');
+            limiteInput.value = '0,00';
+            limiteValue = 0;
+        }
+
+        if (limiteInput.disabled) {
+            limiteInput.disabled = false;
+        }
+
+        return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', handleTipoChange);
+</script>
 {% endblock %}

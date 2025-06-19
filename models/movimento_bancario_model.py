@@ -31,17 +31,17 @@ class MovimentoBancario:
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             conta_bancaria_id INTEGER NOT NULL,
-            transacao_bancaria_id INTEGER NOT NULL, -- Corrigido aqui
+            transacao_bancaria_id INTEGER NOT NULL,
             data DATE NOT NULL,
             valor NUMERIC(15, 2) NOT NULL,
             tipo VARCHAR(50) NOT NULL, -- "Receita" ou "Despesa"
             
             -- Restrição de unicidade para evitar movimentos idênticos duplicados
-            UNIQUE (user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo), -- Corrigido aqui
+            UNIQUE (user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo),
             
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (conta_bancaria_id) REFERENCES contas_bancarias(id) ON DELETE CASCADE,
-            FOREIGN KEY (transacao_bancaria_id) REFERENCES transacoes_bancarias(id) ON DELETE CASCADE -- Corrigido aqui
+            FOREIGN KEY (transacao_bancaria_id) REFERENCES transacoes_bancarias(id) ON DELETE CASCADE
         );
         """
         try:
@@ -72,7 +72,6 @@ class MovimentoBancario:
         Retorna um movimento bancário pelo seu ID e ID do usuário.
         """
         row = execute_query(
-            # Corrigido aqui
             "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo "
             "FROM movimentos_bancarios WHERE id = %s AND user_id = %s",
             (movimento_id, user_id),
@@ -92,7 +91,7 @@ class MovimentoBancario:
                 (user_id, conta_bancaria_id, transacao_bancaria_id,
                  data, valor, tipo),
                 fetchone=True,
-                commit=False
+                commit=True
             )
             movimento_id = result[0] if result else None
 
@@ -133,23 +132,21 @@ class MovimentoBancario:
         Atualiza um movimento bancário existente e ajusta o saldo da conta.
         Necessita dos valores antigos para calcular o ajuste no saldo.
         """
-        existing_movimento = cls.get_by_id(movimento_id, user_id)
-        if not existing_movimento:
-            return None
-
         try:
             execute_query("BEGIN", commit=False)
+
             if old_tipo == 'Receita':
                 revert_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual - %s WHERE id = %s AND user_id = %s"
             else:
                 revert_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
+
             execute_query(revert_query, (old_valor,
-                          existing_movimento.conta_bancaria_id, user_id), commit=False)
+                          conta_bancaria_id, user_id), commit=False)
 
             query = "UPDATE movimentos_bancarios SET conta_bancaria_id = %s, transacao_bancaria_id = %s, data = %s, valor = %s, tipo = %s WHERE id = %s AND user_id = %s"
             params = (conta_bancaria_id, transacao_bancaria_id,
                       data, valor, tipo, movimento_id, user_id)
-            update_mov_success = execute_query(query, params, commit=False)
+            update_mov_success = execute_query(query, params, commit=True)
 
             if not update_mov_success:
                 execute_query("ROLLBACK", commit=True)
@@ -160,6 +157,7 @@ class MovimentoBancario:
                 apply_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
             else:
                 apply_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual - %s WHERE id = %s AND user_id = %s"
+
             apply_success = execute_query(
                 apply_query, (valor, conta_bancaria_id, user_id), commit=True)
 
@@ -194,7 +192,7 @@ class MovimentoBancario:
             execute_query("BEGIN", commit=False)
             if tipo == 'Receita':
                 update_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual - %s WHERE id = %s AND user_id = %s"
-            else:  # tipo == 'Despesa'
+            else:   # tipo == 'Despesa'
                 update_query = "UPDATE contas_bancarias SET saldo_atual = saldo_atual + %s WHERE id = %s AND user_id = %s"
 
             update_success = execute_query(
@@ -238,7 +236,6 @@ class MovimentoBancario:
             end_date = date(year, month + 1, 1) - timedelta(days=1)
 
         rows = execute_query(
-            # Corrigido aqui
             "SELECT id, user_id, conta_bancaria_id, transacao_bancaria_id, data, valor, tipo "
             "FROM movimentos_bancarios WHERE user_id = %s AND conta_bancaria_id = %s "
             "AND data >= %s AND data <= %s ORDER BY data, id",

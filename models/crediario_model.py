@@ -53,7 +53,7 @@ class Crediario:
         Retorna uma lista de todos os itens de crediário de um usuário específico.
         """
         rows = execute_query(
-            "SELECT id, user_id, crediario, tipo, final, limite FROM crediarios WHERE user_id = %s ORDER BY crediario, final",
+            "SELECT id, user_id, crediario, tipo, final, limite FROM crediarios WHERE user_id = %s ORDER BY crediario, tipo",
             (user_id,),
             fetchall=True
         )

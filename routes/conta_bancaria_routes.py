@@ -7,8 +7,7 @@ from functools import wraps
 
 bp_conta_bancaria = Blueprint('conta_bancaria', __name__, url_prefix='/contas')
 
-TIPOS_CONTA = ["Corrente", "Poupança", "Digital",
-               "Restituições", "Vendas", "Serviços", "Outros"]
+TIPOS_CONTA = ["Corrente", "Poupança", "Digital", "Caixinha", "Investimento"]
 
 
 def own_account_required(f):
@@ -52,15 +51,17 @@ def add_conta():
         tipo = request.form.get('tipo')
         saldo_inicial_str = request.form.get('saldo_inicial').replace(
             ',', '.')
-        saldo_atual_str = request.form.get('saldo_atual').replace(
-            ',', '.')
         limite_str = request.form.get('limite').replace(
             ',', '.')
 
         try:
             saldo_inicial = float(saldo_inicial_str)
-            saldo_atual = float(saldo_atual_str)
+            saldo_atual = saldo_inicial
             limite = float(limite_str)
+
+            if tipo not in ["Corrente", "Digital"] and limite > 0:
+                flash('Contas do tipo Poupança, Restituições, Vendas, Serviços e Outros não podem ter limite. O limite será definido como R$ 0,00.', 'warning')
+                limite = 0.00
 
             if len(agencia) > 4:
                 flash('O número da agência deve ter no máximo 4 caracteres.', 'danger')
@@ -102,22 +103,21 @@ def edit_conta(conta_id):
         return redirect(url_for('conta_bancaria.list_contas'))
 
     if request.method == 'POST':
-        banco = request.form.get('banco')
-        agencia = request.form.get('agencia')
-        conta_num = request.form.get('conta')
+        banco = conta.banco
+        agencia = conta.agencia
+        conta_num = conta.conta
+        saldo_inicial = conta.saldo_inicial
+        saldo_atual = conta.saldo_atual
+
         tipo = request.form.get('tipo')
-        saldo_inicial_str = request.form.get('saldo_inicial').replace(',', '.')
-        saldo_atual_str = request.form.get('saldo_atual').replace(',', '.')
         limite_str = request.form.get('limite').replace(',', '.')
 
         try:
-            saldo_inicial = float(saldo_inicial_str)
-            saldo_atual = float(saldo_atual_str)
             limite = float(limite_str)
 
-            if len(agencia) > 4:
-                flash('O número da agência deve ter no máximo 4 caracteres.', 'danger')
-                return render_template('conta_bancaria/edit.html', conta=conta, TIPOS_CONTA=TIPOS_CONTA)
+            if tipo not in ["Corrente", "Digital"] and limite > 0:
+                flash('Contas do tipo Poupança, Restituições, Vendas, Serviços e Outros não podem ter limite. O limite será definido como R$ 0,00.', 'warning')
+                limite = 0.00
 
             updated_conta = ContaBancaria.update(
                 conta_id=conta_id,
@@ -125,10 +125,10 @@ def edit_conta(conta_id):
                 banco=banco,
                 agencia=agencia,
                 conta=conta_num,
-                tipo=tipo,
+                tipo=tipo,  
                 saldo_inicial=saldo_inicial,
-                saldo_atual=saldo_atual,
-                limite=limite
+                saldo_atual=saldo_atual, 
+                limite=limite  
             )
             if updated_conta:
                 flash('Conta bancária atualizada com sucesso!', 'success')

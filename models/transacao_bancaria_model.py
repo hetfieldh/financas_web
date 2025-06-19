@@ -45,7 +45,7 @@ class TransacaoBancaria:
         Retorna uma lista de todas as transações bancárias de um usuário específico.
         """
         rows = execute_query(
-            "SELECT id, user_id, transacao, tipo FROM transacoes_bancarias WHERE user_id = %s ORDER BY transacao",
+            "SELECT id, user_id, transacao, tipo FROM transacoes_bancarias WHERE user_id = %s ORDER BY transacao, tipo",
             (user_id,),
             fetchall=True
         )

@@ -53,7 +53,7 @@ class DespesaFixa:
         Ordena por mes_ano descendente e valor.
         """
         rows = execute_query(
-            "SELECT id, user_id, despesa_receita_id, mes_ano, valor FROM despesas_fixas WHERE user_id = %s ORDER BY mes_ano DESC, valor",
+            "SELECT id, user_id, despesa_receita_id, mes_ano, valor FROM despesas_fixas WHERE user_id = %s ORDER BY despesa_receita_id, mes_ano ASC ",
             (user_id,),
             fetchall=True
         )

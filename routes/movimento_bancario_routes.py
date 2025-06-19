@@ -167,22 +167,23 @@ def edit_movimento(movimento_id):
         return redirect(url_for('transacao_bancaria.add_transacao'))
 
     if request.method == 'POST':
-        conta_bancaria_id = request.form.get('conta_bancaria_id', type=int)
-        transacao_bancaria_id = request.form.get(
+        nova_conta_bancaria_id = request.form.get(
+            'conta_bancaria_id', type=int)
+        nova_transacao_bancaria_id = request.form.get(
             'transacao_bancaria_id', type=int)
-        data_str = request.form.get('data')
-        valor_str = request.form.get('valor')
-        tipo = request.form.get('tipo_hidden')
+        nova_data_str = request.form.get('data')
+        novo_valor_str = request.form.get('valor')
+        novo_tipo = request.form.get('tipo_hidden')
 
-        original_movimento = MovimentoBancario.get_by_id(
-            movimento_id, current_user.id)
+        old_valor = movimento.valor
+        old_tipo = movimento.tipo
 
         try:
-            data = datetime.strptime(data_str, '%Y-%m-%d').date()
-            valor = Decimal(valor_str)
+            nova_data = datetime.strptime(nova_data_str, '%Y-%m-%d').date()
+            novo_valor = Decimal(novo_valor_str)
 
             selected_transacao = TransacaoBancaria.get_by_id(
-                transacao_bancaria_id, current_user.id)
+                nova_transacao_bancaria_id, current_user.id)
             if not selected_transacao:
                 flash(
                     'Transação selecionada não encontrada ou não lhe pertence.', 'danger')
@@ -192,10 +193,10 @@ def edit_movimento(movimento_id):
                                        movimento_date_str=movimento_date_str,
                                        transacoes_json_data=transacoes_base64_string)
 
-            if (selected_transacao.tipo == 'Crédito' and valor < 0) or \
-               (selected_transacao.tipo == 'Débito' and valor > 0):
+            if (selected_transacao.tipo == 'Crédito' and novo_valor < 0) or \
+               (selected_transacao.tipo == 'Débito' and novo_valor > 0):
                 flash(
-                    f'O valor introduzido ({valor_str}) é inválido para o tipo de transação "{selected_transacao.tipo}".', 'danger')
+                    f'O valor introduzido ({novo_valor_str}) é inválido para o tipo de transação "{selected_transacao.tipo}".', 'danger')
                 return render_template('movimento_bancario/edit.html',
                                        movimento=movimento, contas=contas,
                                        transacoes=transacoes, TIPOS_MOVIMENTO=TIPOS_MOVIMENTO,
@@ -205,11 +206,13 @@ def edit_movimento(movimento_id):
             updated_movimento = MovimentoBancario.update(
                 movimento_id=movimento_id,
                 user_id=current_user.id,
-                conta_bancaria_id=conta_bancaria_id,
-                transacao_bancaria_id=transacao_bancaria_id,
-                data=data,
-                valor=valor,
-                tipo=tipo
+                conta_bancaria_id=nova_conta_bancaria_id,
+                transacao_bancaria_id=nova_transacao_bancaria_id,
+                data=nova_data,
+                valor=novo_valor,
+                tipo=novo_tipo,
+                old_valor=old_valor,
+                old_tipo=old_tipo
             )
             if updated_movimento:
                 flash('Movimento bancário atualizado com sucesso!', 'success')
@@ -245,7 +248,11 @@ def delete_movimento(movimento_id):
         return redirect(url_for('movimento_bancario.list_movimentos'))
 
     try:
-        if MovimentoBancario.delete(movimento_id, current_user.id):
+        if MovimentoBancario.delete(movimento_id, current_user.id,
+                                    movimento_a_deletar.conta_bancaria_id,
+                                    movimento_a_deletar.transacao_bancaria_id,
+                                    movimento_a_deletar.valor,
+                                    movimento_a_deletar.tipo):
             flash('Movimento bancário deletado com sucesso!', 'success')
         else:
             flash('Erro ao deletar movimento bancário.', 'danger')
