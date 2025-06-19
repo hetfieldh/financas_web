@@ -1,15 +1,11 @@
 # database/db_manager.py
+
 import psycopg
 from psycopg.errors import OperationalError, UniqueViolation, UndefinedTable
 from config import Config
-from contextlib import contextmanager
 
 
-def get_db_connection():
-    """
-    Estabelece uma conexão com o banco de dados PostgreSQL usando as configurações do Config.
-    Levanta um RuntimeError se a conexão falhar.
-    """
+def open_connection():
     db_config = Config.DATABASE
     try:
         conn = psycopg.connect(
@@ -30,64 +26,55 @@ def get_db_connection():
             "Erro inesperado ao conectar ao banco de dados.") from e
 
 
-@contextmanager
-def get_db_cursor(commit=False):
-    """
-    Fornece um cursor de banco de dados, garantindo que a conexão seja fechada.
-    Se 'commit' for True, a transação é commitada; caso contrário, é revertida em caso de erro.
-    """
-    conn = None
-    cursor = None
+def execute_query(query, params=None, fetchone=False, fetchall=False, commit=False, connection=None, cursor=None):
+    _conn = connection
+    _cursor = cursor
+    close_internally = False
+
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        yield cursor
-        if commit:
-            conn.commit()
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        print(f"Erro na transação do banco de dados: {e}")
-        raise
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        if _conn is None:
+            _conn = open_connection()
+            _cursor = _conn.cursor()
+            close_internally = True
 
+        _cursor.execute(query, params)
 
-def execute_query(query, params=None, fetchone=False, fetchall=False, commit=False):
-    """
-    Executa uma consulta SQL e retorna resultados opcionais.
+        result = None
+        if fetchone:
+            result = _cursor.fetchone()
+        elif fetchall:
+            result = _cursor.fetchall()
+        elif commit and close_internally:
+            _conn.commit()
+            result = True
 
-    Args:
-        query (str): A consulta SQL a ser executada.
-        params (tuple, optional): Parâmetros para a consulta, para prevenir SQL injection.
-        fetchone (bool): Se True, retorna apenas a primeira linha do resultado.
-        fetchall (bool): Se True, retorna todas as linhas do resultado.
-        commit (bool): Se True, commita a transação após a execução da query.
+        return result if (fetchone or fetchall) else (_cursor.rowcount > 0 if commit else True)
 
-    Returns:
-        mixed: Retorna True em caso de sucesso (sem fetch), a linha (se fetchone),
-              todas as linhas (se fetchall), ou False em caso de erro de operação.
-              Levanta exceções para erros de unicidade ou outros erros inesperados.
-    """
-    try:
-        with get_db_cursor(commit=commit) as cursor:
-            cursor.execute(query, params)
-            if fetchone:
-                return cursor.fetchone()
-            elif fetchall:
-                return cursor.fetchall()
-            else:
-                return True
     except OperationalError as e:
+        if close_internally and _conn:
+            _conn.rollback()
         print(f"Erro de operação no banco de dados: {e}")
-        return False
+        raise
     except UniqueViolation as e:
+        if close_internally and _conn:
+            _conn.rollback()
         print(f"Erro de violação de unicidade: {e}")
         raise ValueError(
             "Violação de unicidade de dados. Este registro já existe.") from e
+    except UndefinedTable as e:
+        if close_internally and _conn:
+            _conn.rollback()
+        print(f"Erro: Tabela não definida: {e}")
+        raise RuntimeError(
+            "Erro no esquema do banco de dados. Tabela não encontrada.") from e
     except Exception as e:
+        if close_internally and _conn:
+            _conn.rollback()
         print(f"Erro inesperado ao executar consulta: {e}")
         raise
+
+    finally:
+        if close_internally and _cursor:
+            _cursor.close()
+        if close_internally and _conn:
+            _conn.close()

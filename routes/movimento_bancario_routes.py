@@ -18,10 +18,6 @@ TIPOS_MOVIMENTO = ["Despesa", "Receita"]
 
 
 def own_movement_required(f):
-    """
-    Decorador personalizado para garantir que o utilizador está a aceder ou a modificar
-    o seu próprio movimento bancário.
-    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         movimento_id = kwargs.get('movimento_id')
@@ -39,10 +35,6 @@ def own_movement_required(f):
 @bp_movimento_bancario.route('/')
 @login_required
 def list_movimentos():
-    """
-    Lista todos os movimentos bancários do utilizador autenticado.
-    Para exibir detalhes da conta e transação, buscamos os objetos completos.
-    """
     movimentos = MovimentoBancario.get_all_by_user(current_user.id)
     for mov in movimentos:
         mov.conta_detalhes = ContaBancaria.get_by_id(
@@ -57,9 +49,6 @@ def list_movimentos():
 @bp_movimento_bancario.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_movimento():
-    """
-    Adiciona um novo movimento bancário para o utilizador autenticado.
-    """
     contas = ContaBancaria.get_all_by_user(current_user.id)
     transacoes = TransacaoBancaria.get_all_by_user(current_user.id)
 
@@ -138,9 +127,6 @@ def add_movimento():
 @login_required
 @own_movement_required
 def edit_movimento(movimento_id):
-    """
-    Edita um movimento bancário existente.
-    """
     movimento = MovimentoBancario.get_by_id(movimento_id, current_user.id)
     if not movimento:
         flash('Movimento bancário não encontrado.', 'danger')
@@ -238,9 +224,6 @@ def edit_movimento(movimento_id):
 @login_required
 @own_movement_required
 def delete_movimento(movimento_id):
-    """
-    Deleta um movimento bancário. Apenas via POST para segurança.
-    """
     movimento_a_deletar = MovimentoBancario.get_by_id(
         movimento_id, current_user.id)
     if not movimento_a_deletar:
@@ -248,11 +231,8 @@ def delete_movimento(movimento_id):
         return redirect(url_for('movimento_bancario.list_movimentos'))
 
     try:
-        if MovimentoBancario.delete(movimento_id, current_user.id,
-                                    movimento_a_deletar.conta_bancaria_id,
-                                    movimento_a_deletar.transacao_bancaria_id,
-                                    movimento_a_deletar.valor,
-                                    movimento_a_deletar.tipo):
+        # AQUI FOI FEITA A MUDANÇA: Agora, apenas os argumentos esperados são passados.
+        if MovimentoBancario.delete(movimento_id, current_user.id):
             flash('Movimento bancário deletado com sucesso!', 'success')
         else:
             flash('Erro ao deletar movimento bancário.', 'danger')

@@ -1,4 +1,4 @@
-# routes/extrato_routes.py
+# routes/extratos_bancarios_routes.py
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
@@ -15,9 +15,6 @@ bp_extratos_bancario = Blueprint(
 @bp_extratos_bancario.route('/bancario_form', methods=['GET', 'POST'])
 @login_required
 def bancario_form():
-    """
-    Exibe o formulário para seleção de conta bancária e mês/ano para o extrato.
-    """
     contas = ContaBancaria.get_all_by_user(current_user.id)
 
     meses_anos = []
@@ -62,10 +59,6 @@ def bancario_form():
 @bp_extratos_bancario.route('/bancario_view/<int:conta_id>/<string:mes_ano>', methods=['GET'])
 @login_required
 def bancario_view(conta_id, mes_ano):
-    """
-    Exibe o extrato bancário para a conta e mês/ano selecionados.
-    Calcula saldo inicial e final.
-    """
     conta = ContaBancaria.get_by_id(conta_id, current_user.id)
     if not conta:
         flash('Conta bancária não encontrada ou você não tem permissão para acessá-la.', 'danger')
@@ -99,10 +92,7 @@ def bancario_view(conta_id, mes_ano):
 
     saldo_final_mes = saldo_inicial_mes
     for mov in movimentos:
-        if mov.tipo == 'Receita':
-            saldo_final_mes += mov.valor
-        else:
-            saldo_final_mes -= mov.valor
+        saldo_final_mes += mov.valor
 
     return render_template('extratos/bancario_view.html',
                            conta=conta,

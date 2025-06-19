@@ -27,7 +27,7 @@
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                     <option value="">Selecione...</option>
                     {% for crediario_item in crediarios %}
-                        <option value="{{ crediario_item.id }}">{{ crediario_item.crediario }} - Final: {{ crediario_item.final }}</option>
+                        <option value="{{ crediario_item.id }}">{{ crediario_item.crediario }} ({{ crediario_item.tipo }})</option>
                     {% endfor %}
                 </select>
             </div>

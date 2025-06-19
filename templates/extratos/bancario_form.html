@@ -15,7 +15,7 @@
                 <option value="">Selecione...</option>
                 {% if contas %}
                 {% for conta in contas %}
-                <option value="{{ conta.id }}">{{ conta.banco }} ({{ conta.conta }}) - Saldo: R$ {{ "%.2f" |
+                <option value="{{ conta.id }}">{{ conta.banco }} ({{conta.tipo}}) - Saldo: R$ {{ "%.2f" |
                     format(conta.saldo_atual | float) }}</option>
                 {% endfor %}
                 {% else %}

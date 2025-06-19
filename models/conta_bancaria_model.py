@@ -2,6 +2,7 @@
 
 from database.db_manager import execute_query
 from psycopg.errors import UniqueViolation, ForeignKeyViolation
+from decimal import Decimal
 
 
 class ContaBancaria:
@@ -31,12 +32,12 @@ class ContaBancaria:
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             banco VARCHAR(255) NOT NULL,
-            agencia VARCHAR(4) NOT NULL,  
-            conta VARCHAR(20) NOT NULL,   
+            agencia VARCHAR(4) NOT NULL,
+            conta VARCHAR(20) NOT NULL,
             tipo VARCHAR(50) NOT NULL,
-            saldo_inicial NUMERIC(15, 2) NOT NULL,
-            saldo_atual NUMERIC(15, 2) NOT NULL,
-            limite NUMERIC(15, 2) NOT NULL,
+            saldo_inicial NUMERIC(15, 2) NOT NULL DEFAULT 0.00, -- Adicionado DEFAULT
+            saldo_atual NUMERIC(15, 2) NOT NULL DEFAULT 0.00, -- Adicionado DEFAULT
+            limite NUMERIC(15, 2) NOT NULL DEFAULT 0.00,     -- Adicionado DEFAULT
             UNIQUE (user_id, banco, agencia, conta, tipo),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
@@ -71,19 +72,27 @@ class ContaBancaria:
             (conta_id, user_id),
             fetchone=True
         )
-        return cls(*row) if row else None
+        if row:
+            row_list = list(row)
+            row_list[6] = Decimal(str(row_list[6]))
+            row_list[7] = Decimal(str(row_list[7]))
+            row_list[8] = Decimal(str(row_list[8]))
+            return cls(*row_list)
+        return None
 
     @classmethod
-    def add(cls, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite):
+    def add(cls, user_id, banco, agencia, conta, tipo, saldo_inicial=Decimal('0.00'), limite=Decimal('0.00')):
         """
         Adiciona uma nova conta bancária ao banco de dados.
+        O saldo_atual será inicializado com o saldo_inicial fornecido.
         Levanta ValueError em caso de violação de unicidade ou chave estrangeira.
         """
+        saldo_atual = saldo_inicial
         try:
             result = execute_query(
                 "INSERT INTO contas_bancarias (user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
                 (user_id, banco, agencia, conta, tipo,
-                 saldo_inicial, saldo_atual, limite),
+                 saldo_inicial, saldo_atual, limite),  # saldo_atual agora vem de saldo_inicial
                 fetchone=True,
                 commit=True
             )
@@ -103,9 +112,11 @@ class ContaBancaria:
             raise
 
     @classmethod
-    def update(cls, conta_id, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite):
+    def update(cls, conta_id, user_id, banco, agencia, conta, tipo, saldo_inicial, limite):
         """
         Atualiza as informações de uma conta bancária existente.
+        O saldo_atual NÃO é atualizado aqui diretamente, pois é gerenciado por movimentos bancários.
+        Você pode ajustar o saldo_inicial e o limite.
         Levanta ValueError em caso de violação de unicidade ou se a conta não for encontrada.
         """
         existing_conta = cls.get_by_id(conta_id, user_id)
@@ -113,11 +124,15 @@ class ContaBancaria:
             return None
 
         try:
-            query = "UPDATE contas_bancarias SET banco = %s, agencia = %s, conta = %s, tipo = %s, saldo_inicial = %s, saldo_atual = %s, limite = %s WHERE id = %s AND user_id = %s"
+            query = """
+                UPDATE contas_bancarias
+                SET banco = %s, agencia = %s, conta = %s, tipo = %s, saldo_inicial = %s, limite = %s
+                WHERE id = %s AND user_id = %s
+            """
             params = (banco, agencia, conta, tipo, saldo_inicial,
-                      saldo_atual, limite, conta_id, user_id)
+                      limite, conta_id, user_id)
             if execute_query(query, params, commit=True):
-                return cls(conta_id, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite)
+                return cls.get_by_id(conta_id, user_id)
             return None
         except UniqueViolation as e:
             raise ValueError(
@@ -135,4 +150,40 @@ class ContaBancaria:
         """
         query = "DELETE FROM contas_bancarias WHERE id = %s AND user_id = %s"
         params = (conta_id, user_id)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except Exception as e:
+            print(f"Erro ao deletar conta bancária: {e}")
+            raise
+
+    @staticmethod
+    def update_saldo(conta_id, user_id, valor_a_ajustar, connection=None, cursor=None):
+        """
+        Atualiza o saldo atual de uma conta bancária.
+        Este método é projetado para ser chamado dentro de uma transação maior.
+
+        Args:
+            conta_id (int): O ID da conta bancária a ser atualizada.
+            user_id (int): O ID do usuário proprietário da conta (para segurança).
+            valor_a_ajustar (Decimal): O valor a ser adicionado (crédito) ou subtraído (débito)
+                                       do saldo atual. Use um Decimal.
+            connection (obj, optional): Objeto de conexão do banco de dados. Se fornecido,
+                                        a query será executada na transação existente.
+            cursor (obj, optional): Objeto de cursor do banco de dados. Se fornecido,
+                                    a query será executada usando este cursor.
+        Raises:
+            Exception: Se ocorrer um erro durante a atualização do saldo.
+        """
+        query = """
+            UPDATE contas_bancarias
+            SET saldo_atual = saldo_atual + %s
+            WHERE id = %s AND user_id = %s;
+        """
+        params = (valor_a_ajustar, conta_id, user_id)
+
+        try:
+            return execute_query(query, params, commit=False, connection=connection, cursor=cursor)
+        except Exception as e:
+            print(
+                f"Erro ao ajustar saldo da conta {conta_id} (usuário {user_id}): {e}")
+            raise
