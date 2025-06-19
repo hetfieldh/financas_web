@@ -48,15 +48,15 @@
                 value="{{ '%.2f' | format(movimento.valor | float) | replace('.', ',') }}"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                 placeholder="Ex: 1.500,75 ou -50,00">
-            <input type="hidden" id="valor" name="valor" value="{{ '%.2f' | format(movimento.valor | float) }}"> 
+            <input type="hidden" id="valor" name="valor" value="{{ '%.2f' | format(movimento.valor | float) }}">
             <p id="valor-validation-message" class="text-red-500 text-xs mt-1 hidden"></p>
         </div>
         <div class="mb-6">
             <label for="tipo_movimento_display" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
                 Movimento</label>
-            <input type="text" id="tipo_movimento_display" name="tipo" readonly value="{{ movimento.tipo }}" 
+            <input type="text" id="tipo_movimento_display" name="tipo" readonly value="{{ movimento.tipo }}"
                 class="w-full px-4 py-2 border border-gray-300 bg-gray-100 rounded-lg focus:outline-none cursor-not-allowed">
-            <input type="hidden" name="tipo_hidden" id="tipo_hidden" value="{{ movimento.tipo }}"> 
+            <input type="hidden" name="tipo_hidden" id="tipo_hidden" value="{{ movimento.tipo }}">
         </div>
         <div class="flex justify-end space-x-4">
             <a href="{{ url_for('movimento_bancario.list_movimentos') }}"
@@ -71,173 +71,6 @@
     </form>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const valorDisplayInput = document.getElementById('valor_display'); 
-        const valorHiddenInput = document.getElementById('valor');          
-        const tipoMovimentoDisplay = document.getElementById('tipo_movimento_display');
-        const tipoMovimentoHidden = document.getElementById('tipo_hidden');
-        const transacaoBancariaIdSelect = document.getElementById('transacao_bancaria_id');
-        const valorValidationMessage = document.getElementById('valor-validation-message');
+<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 
-        function padBase64(base64) {
-            const padding = base64.length % 4;
-            if (padding === 0) {
-                return base64;
-            }
-            return base64 + '='.repeat(4 - padding);
-        }
-
-        const jsonScriptTag = document.getElementById('transacoes-data');
-        let transacoesData = [];
-        if (jsonScriptTag && jsonScriptTag.textContent) { 
-            try {
-                let base64StringRaw = jsonScriptTag.textContent;
-                console.log('Original base64 string from textContent (edit.html):', base64StringRaw); 
-
-                const base64StringNoWhitespace = base64StringRaw.replace(/\s/g, '');
-                console.log('Base64 string after removing whitespace (edit.html):', base64StringNoWhitespace); 
-
-                const base64StringClean = base64StringNoWhitespace.replace(/[^A-Za-z0-9+/=]/g, '');
-                console.log('Base64 string after removing non-base64 chars (edit.html):', base64StringClean); 
-
-                const base64StringPadded = padBase64(base64StringClean);
-                console.log('Base64 string after padding (edit.html):', base64StringPadded); 
-
-                if (base64StringPadded) {
-                    const jsonString = atob(base64StringPadded); 
-                    console.log('JSON string after atob (edit.html):', jsonString); 
-                    transacoesData = JSON.parse(jsonString);
-                    console.log('Successfully parsed JSON data (edit.html):', transacoesData); 
-                } else {
-                    console.warn('Base64 string is empty after cleaning and padding. No data to parse (edit.html).');
-                    transacoesData = [];
-                }
-            } catch (e) {
-                console.error('Erro ao analisar JSON de transações (edit.html):', e, 'String Base64 limpa e preenchida:', base64StringPadded);
-                transacoesData = []; 
-            }
-        }
-
-        const transactionTypesMap = {};
-        transacoesData.forEach(item => {
-            transactionTypesMap[item.id] = { transacao: item.transacao, tipo: item.tipo };
-        });
-
-        function formatDisplayValue(number) {
-            if (isNaN(number)) return '';
-            return parseFloat(number).toFixed(2).replace('.', ',');
-        }
-
-        function parseDisplayValue(valueString) {
-            if (!valueString) return NaN;
-            valueString = valueString.trim();
-            valueString = valueString.replace(/\./g, ''); 
-            valueString = valueString.replace(/,/g, '.'); 
-
-            return parseFloat(valueString);
-        }
-
-        function filterInput(inputElement) {
-            let value = inputElement.value;
-            let filteredValue = value.replace(/[^0-9.,-]/g, '');
-
-            if (filteredValue.indexOf('-') > 0) {
-                filteredValue = filteredValue.replace(/-/g, '');
-                if (value.startsWith('-')) {
-                    filteredValue = '-' + filteredValue;
-                }
-            }
-            inputElement.value = filteredValue;
-        }
-
-        function validateAndAdjustValor() {
-            let numericValue = parseDisplayValue(valorDisplayInput.value);
-
-            const selectedTransacaoId = transacaoBancariaIdSelect.value;
-            let transacaoTipo = null;
-            if (selectedTransacaoId && transactionTypesMap[selectedTransacaoId]) {
-                transacaoTipo = transactionTypesMap[selectedTransacaoId].tipo;
-            }
-
-            valorValidationMessage.classList.add('hidden'); 
-            valorDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500'); 
-
-            if (isNaN(numericValue)) {
-                if (valorDisplayInput.value !== '' && valorDisplayInput.value !== '-') {
-                    valorValidationMessage.textContent = 'Por favor, insira um valor numérico válido (ex: 1.500,75 ou -50,00).';
-                    valorValidationMessage.classList.remove('hidden');
-                    valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-                }
-                numericValue = 0; 
-            }
-
-            if (transacaoTipo === 'Crédito' && numericValue < 0) {
-                numericValue = Math.abs(numericValue);
-                valorValidationMessage.textContent = 'Para transações de Crédito, o valor deve ser positivo. Valor ajustado.';
-                valorValidationMessage.classList.remove('hidden');
-                valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-            } else if (transacaoTipo === 'Débito' && numericValue > 0) {
-                numericValue = -Math.abs(numericValue);
-                valorValidationMessage.textContent = 'Para transações de Débito, o valor deve ser negativo. Valor ajustado.';
-                valorValidationMessage.classList.remove('hidden');
-                valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-            }
-
-            valorDisplayInput.value = formatDisplayValue(numericValue);
-            valorHiddenInput.value = numericValue.toFixed(2);
-
-            adjustTipoMovimento(numericValue >= 0 ? 'Receita' : 'Despesa');
-        }
-
-        function adjustTipoMovimento(forcedType = null) {
-            if (forcedType) {
-                tipoMovimentoDisplay.value = forcedType;
-                tipoMovimentoHidden.value = forcedType;
-            } else {
-                const valorNumerico = parseDisplayValue(valorDisplayInput.value);
-                if (!isNaN(valorNumerico)) {
-                    tipoMovimentoDisplay.value = valorNumerico >= 0 ? 'Receita' : 'Despesa';
-                    tipoMovimentoHidden.value = valorNumerico >= 0 ? 'Receita' : 'Despesa';
-                } else {
-                    tipoMovimentoDisplay.value = 'Receita';
-                    tipoMovimentoHidden.value = 'Receita';
-                }
-            }
-        }
-
-        valorDisplayInput.addEventListener('input', function () {
-            filterInput(this); 
-        });
-
-        valorDisplayInput.addEventListener('blur', validateAndAdjustValor);
-
-        valorDisplayInput.addEventListener('focus', function () {
-            const currentNumericValue = parseDisplayValue(this.value);
-            if (!isNaN(currentNumericValue)) {
-                this.value = currentNumericValue.toString(); 
-            } else {
-                this.value = ''; 
-            }
-            valorValidationMessage.classList.add('hidden'); 
-            valorDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-        });
-
-        transacaoBancariaIdSelect.addEventListener('change', function () {
-            validateAndAdjustValor(); 
-        });
-
-        const initialRawValue = "{{ '%.2f' | format(movimento.valor | float) }}";
-        const initialNumericValue = parseFloat(initialRawValue);
-
-        if (!isNaN(initialNumericValue)) {
-            valorDisplayInput.value = formatDisplayValue(initialNumericValue);
-            valorHiddenInput.value = initialNumericValue.toFixed(2);
-        } else {
-            valorDisplayInput.value = formatDisplayValue(0);
-            valorHiddenInput.value = "0.00";
-        }
-        adjustTipoMovimento(parseFloat(valorHiddenInput.value) >= 0 ? 'Receita' : 'Despesa');
-    });
-</script>
 {% endblock %}

@@ -1,42 +1,57 @@
-{# templates\movimento_bancario\add.html #}
+{# templates/movimento_renda/add.html #}
 
 {% extends 'base.html' %}
 
-{% block title %}Finanças Web | Movimento Bancário{% endblock %}
+{% block title %}Finanças Web | Adicionar Movimento de Renda{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
-    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Movimento Bancário</h2>
-    <form method="POST" action="{{ url_for('movimento_bancario.add_movimento') }}">
-        <script type="application/json" id="transacoes-data">
-            {{ transacoes_json_data | safe }}
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Adicionar Movimento de Renda</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="mb-4">
+        {% for category, message in messages %}
+        <div
+            class="alert alert-{{ category }} p-3 rounded-md text-sm {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% elif category == 'warning' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('movimentos_renda.add_movimento_renda') }}">
+        {# Script para passar os dados dos itens de renda para o JS #}
+        <script type="application/json" id="rendas-data">
+            {{ rendas_json_data | safe }}
         </script>
+
         <div class="mb-5">
-            <label for="conta_bancaria_id" class="block text-gray-700 text-sm font-medium mb-2">Conta Bancária</label>
-            <select id="conta_bancaria_id" name="conta_bancaria_id" required
+            <label for="renda_id" class="block text-gray-700 text-sm font-medium mb-2">Item de Renda</label>
+            <select id="renda_id" name="renda_id" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
                 <option value="">Selecione...</option>
-                {% for conta in contas %}
-                <option value="{{ conta.id }}">{{ conta.banco }} - Ag: {{ conta.agencia }} C: {{ conta.conta }} ({{
-                    conta.tipo }})</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="mb-5">
-            <label for="transacao_bancaria_id" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
-                Transação</label>
-            <select id="transacao_bancaria_id" name="transacao_bancaria_id" required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
-                <option value="">Selecione um tipo de transação...</option>
-                {% for transacao_item in transacoes %}
-                <option value="{{ transacao_item.id }}">{{ transacao_item.transacao }} ({{ transacao_item.tipo }})
+                {% for renda_item in rendas_disponiveis %}
+                <option value="{{ renda_item.id }}" {% if form_data.get('renda_id') | int==renda_item.id %}selected{%
+                    endif %}>
+                    {{ renda_item.descricao }} ({{ renda_item.tipo }})
                 </option>
                 {% endfor %}
             </select>
         </div>
         <div class="mb-5">
-            <label for="data" class="block text-gray-700 text-sm font-medium mb-2">Data</label>
-            <input type="date" id="data" name="data" required value="{{ today_date }}"
+            <label for="mes_ref" class="block text-gray-700 text-sm font-medium mb-2">Mês de Referência
+                (AAAA-MM)</label>
+            <input type="month" id="mes_ref" name="mes_ref"
+                value="{{ form_data.get('mes_ref') if form_data.get('mes_ref') else current_month_year }}" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+        </div>
+        <div class="mb-5">
+            <label for="mes_pagto" class="block text-gray-700 text-sm font-medium mb-2">Mês de Pagamento
+                (AAAA-MM)</label>
+            <input type="month" id="mes_pagto" name="mes_pagto"
+                value="{{ form_data.get('mes_pagto') if form_data.get('mes_pagto') else current_month_year }}" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
         </div>
         <div class="mb-5">
@@ -47,16 +62,8 @@
             <input type="hidden" id="valor" name="valor">
             <p id="valor-validation-message" class="text-red-500 text-xs mt-1 hidden"></p>
         </div>
-        <div class="mb-6">
-            <label for="tipo_movimento_display" class="block text-gray-700 text-sm font-medium mb-2">Tipo de
-                Movimento</label>
-            <input type="text" id="tipo_movimento_display" name="tipo" readonly value="Receita" {# Valor inicial padrão
-                #}
-                class="w-full px-4 py-2 border border-gray-300 bg-gray-100 rounded-lg focus:outline-none cursor-not-allowed">
-            <input type="hidden" name="tipo_hidden" id="tipo_hidden" value="Receita">
-        </div>
         <div class="flex justify-end space-x-4">
-            <a href="{{ url_for('movimento_bancario.list_movimentos') }}"
+            <a href="{{ url_for('movimentos_renda.list_movimentos_renda') }}"
                 class="inline-flex items-center px-6 py-2 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
                 Cancelar
             </a>

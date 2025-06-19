@@ -39,7 +39,7 @@
             <label for="descricao" class="block text-gray-700 text-sm font-medium mb-2">Descrição</label>
             <input type="text" id="descricao" name="descricao" value="{{ movimento.descricao }}" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                placeholder="Ex: Compra de Eletr\u00f4nico, Serviço de Manutenção">
+                placeholder="Ex: Compra de Eletrônico, Serviço de Manutenção">
         </div>
         <div class="mb-5">
             <label for="valor_total" class="block text-gray-700 text-sm font-medium mb-2">Valor Total (R$)</label>
@@ -78,14 +78,6 @@
     </form>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const valorTotalInput = document.getElementById('valor_total');
-        if (valorTotalInput) {
-            valorTotalInput.addEventListener('input', function () {
-                window.restrictToCurrency(this);
-            });
-        }
-    });
-</script>
+<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+
 {% endblock %}
