@@ -9,6 +9,9 @@
     <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Editar Movimento de Crediário</h2>
     <form method="POST"
         action="{{ url_for('movimento_crediario.edit_movimento_crediario', movimento_id=movimento.id) }}">
+        <script type="application/json" id="grupos-crediario-data">
+            {{ grupos_crediario_json_data | safe }}
+        </script>
         <div class="mb-5">
             <label for="grupo_crediario_id" class="block text-gray-700 text-sm font-medium mb-2">Grupo de
                 Crediário</label>
@@ -42,12 +45,15 @@
                 placeholder="Ex: Compra de Eletrônico, Serviço de Manutenção">
         </div>
         <div class="mb-5">
-            <label for="valor_total" class="block text-gray-700 text-sm font-medium mb-2">Valor Total (R$)</label>
-            <input type="text" id="valor_total" name="valor_total"
-                value="{{ '%.2f' | format(movimento.valor_total | float) }}" required pattern="[0-9]+([,\.][0-9]{1,2})?"
-                inputmode="decimal"
+            <label for="valor_total_display" class="block text-gray-700 text-sm font-medium mb-2">Valor Total
+                (R$)</label>
+            <input type="text" id="valor_total_display" value="{{ '%.2f' | format(movimento.valor_total | float) }}"
+                required inputmode="decimal"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                placeholder="Ex: 1500,00">
+                placeholder="Ex: 1500,00 ou -50,00">
+            <input type="hidden" id="valor_total_hidden" name="valor_total"
+                value="{{ '%.2f' | format(movimento.valor_total | float) }}">
+            <p id="valor-validation-message" class="text-red-500 text-xs mt-1 hidden"></p>
         </div>
         <div class="mb-5">
             <label for="num_parcelas" class="block text-gray-700 text-sm font-medium mb-2">Número de Parcelas
@@ -80,12 +86,133 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const valorTotalInput = document.getElementById('valor_total');
-        if (valorTotalInput) {
-            valorTotalInput.addEventListener('input', function () {
-                window.restrictToCurrency(this);
-            });
+        const valorTotalDisplayInput = document.getElementById('valor_total_display');
+        const valorTotalHiddenInput = document.getElementById('valor_total_hidden');
+        const grupoCrediarioIdSelect = document.getElementById('grupo_crediario_id');
+        const valorValidationMessage = document.getElementById('valor-validation-message');
+
+        function padBase64(base64) {
+            const padding = base64.length % 4;
+            if (padding === 0) {
+                return base64;
+            }
+            return base64 + '='.repeat(4 - padding);
         }
+
+        const jsonScriptTag = document.getElementById('grupos-crediario-data');
+        let gruposCrediarioData = [];
+        if (jsonScriptTag && jsonScriptTag.textContent) {
+            try {
+                let base64StringRaw = jsonScriptTag.textContent;
+                const base64StringNoWhitespace = base64StringRaw.replace(/\s/g, '');
+                const base64StringClean = base64StringNoWhitespace.replace(/[^A-Za-z0-9+/=]/g, '');
+                const base64StringPadded = padBase64(base64StringClean);
+
+                if (base64StringPadded) {
+                    const jsonString = atob(base64StringPadded);
+                    gruposCrediarioData = JSON.parse(jsonString);
+                } else {
+                    console.warn('Base64 string is empty after cleaning and padding. No data to parse (edit.html).');
+                    gruposCrediarioData = [];
+                }
+            } catch (e) {
+                console.error('Erro ao analisar JSON de grupos de crediário (edit.html):', e, 'String Base64 limpa e preenchida:', base64StringPadded);
+                gruposCrediarioData = [];
+            }
+        }
+
+        const gruposCrediarioMap = {};
+        gruposCrediarioData.forEach(item => {
+            gruposCrediarioMap[item.id] = { grupo: item.grupo, tipo: item.tipo };
+        });
+
+        function formatDisplayValue(number) {
+            if (isNaN(number)) return '';
+            return parseFloat(number).toFixed(2).replace('.', ',');
+        }
+
+        function parseDisplayValue(valueString) {
+            if (!valueString) return NaN;
+            valueString = valueString.trim();
+            valueString = valueString.replace(/\./g, '');
+            valueString = valueString.replace(/,/g, '.');
+            return parseFloat(valueString);
+        }
+
+        function filterInput(inputElement) {
+            let value = inputElement.value;
+            let filteredValue = value.replace(/[^0-9.,-]/g, '');
+
+            if (filteredValue.indexOf('-') > 0) {
+                filteredValue = filteredValue.replace(/-/g, '');
+                if (value.startsWith('-')) {
+                    filteredValue = '-' + filteredValue;
+                }
+            }
+            inputElement.value = filteredValue;
+        }
+
+        function validateAndAdjustValor() {
+            let numericValue = parseDisplayValue(valorTotalDisplayInput.value);
+
+            const selectedGrupoId = grupoCrediarioIdSelect.value;
+            let grupoTipo = null;
+
+            if (selectedGrupoId && gruposCrediarioMap[selectedGrupoId]) {
+                grupoTipo = gruposCrediarioMap[selectedGrupoId].tipo;
+            }
+
+            valorValidationMessage.classList.add('hidden');
+            valorTotalDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+
+            if (isNaN(numericValue)) {
+                if (valorTotalDisplayInput.value !== '' && valorTotalDisplayInput.value !== '-') {
+                    valorValidationMessage.textContent = 'Por favor, insira um valor numérico válido (ex: 1.500,75 ou -50,00).';
+                    valorValidationMessage.classList.remove('hidden');
+                    valorTotalDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                }
+                valorTotalHiddenInput.value = '0.00';
+                return;
+            }
+
+            if (grupoTipo === 'Compra' && numericValue < 0) {
+                numericValue = Math.abs(numericValue);
+                valorValidationMessage.textContent = 'Para Grupos de Crediário do tipo "Compra", o valor deve ser positivo. Valor ajustado.';
+                valorValidationMessage.classList.remove('hidden');
+                valorTotalDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            } else if (grupoTipo === 'Estorno' && numericValue > 0) {
+                numericValue = -Math.abs(numericValue);
+                valorValidationMessage.textContent = 'Para Grupos de Crediário do tipo "Estorno", o valor deve ser negativo. Valor ajustado.';
+                valorValidationMessage.classList.remove('hidden');
+                valorTotalDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+            }
+
+            valorTotalDisplayInput.value = formatDisplayValue(numericValue);
+            valorTotalHiddenInput.value = numericValue.toFixed(2);
+        }
+
+        valorTotalDisplayInput.addEventListener('input', function () {
+            filterInput(this);
+        });
+
+        valorTotalDisplayInput.addEventListener('blur', validateAndAdjustValor);
+
+        valorTotalDisplayInput.addEventListener('focus', function () {
+            const currentNumericValue = parseDisplayValue(this.value);
+            if (!isNaN(currentNumericValue)) {
+                this.value = currentNumericValue.toString();
+            } else {
+                this.value = '';
+            }
+            valorValidationMessage.classList.add('hidden');
+            valorTotalDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+        });
+
+        grupoCrediarioIdSelect.addEventListener('change', function () {
+            validateAndAdjustValor();
+        });
+
+        validateAndAdjustValor();
     });
 </script>
 {% endblock %}
