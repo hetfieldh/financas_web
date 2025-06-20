@@ -116,4 +116,12 @@ class ParcelaCrediario:
         """
         query = "DELETE FROM parcelas_crediario WHERE id = %s"
         params = (parcela_id,)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar esta parcela de crediário, pois ela possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
+        except Exception as e:
+            print(f"Erro inesperado ao deletar parcela de crediário: {e}")
+            raise

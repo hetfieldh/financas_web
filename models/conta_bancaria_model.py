@@ -35,11 +35,11 @@ class ContaBancaria:
             agencia VARCHAR(4) NOT NULL,
             conta VARCHAR(20) NOT NULL,
             tipo VARCHAR(50) NOT NULL,
-            saldo_inicial NUMERIC(15, 2) NOT NULL DEFAULT 0.00, -- Adicionado DEFAULT
-            saldo_atual NUMERIC(15, 2) NOT NULL DEFAULT 0.00, -- Adicionado DEFAULT
-            limite NUMERIC(15, 2) NOT NULL DEFAULT 0.00,     -- Adicionado DEFAULT
+            saldo_inicial NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
+            saldo_atual NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
+            limite NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
             UNIQUE (user_id, banco, agencia, conta, tipo),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
         );
         """
         try:
@@ -81,7 +81,7 @@ class ContaBancaria:
         return None
 
     @classmethod
-    def add(cls, user_id, banco, agencia, conta, tipo, saldo_inicial=Decimal('0.00'), limite=Decimal('0.00')):
+    def add(cls, user_id, banco, agencia, conta, tipo, saldo_inicial=Decimal('0.00'), saldo_atual=Decimal('0.00'), limite=Decimal('0.00')):
         """
         Adiciona uma nova conta bancária ao banco de dados.
         O saldo_atual será inicializado com o saldo_inicial fornecido.
@@ -92,7 +92,7 @@ class ContaBancaria:
             result = execute_query(
                 "INSERT INTO contas_bancarias (user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
                 (user_id, banco, agencia, conta, tipo,
-                 saldo_inicial, saldo_atual, limite),  # saldo_atual agora vem de saldo_inicial
+                 saldo_inicial, saldo_atual, limite),
                 fetchone=True,
                 commit=True
             )
@@ -112,7 +112,7 @@ class ContaBancaria:
             raise
 
     @classmethod
-    def update(cls, conta_id, user_id, banco, agencia, conta, tipo, saldo_inicial, limite):
+    def update(cls, conta_id, user_id, banco, agencia, conta, tipo, saldo_inicial, saldo_atual, limite):
         """
         Atualiza as informações de uma conta bancária existente.
         O saldo_atual NÃO é atualizado aqui diretamente, pois é gerenciado por movimentos bancários.
@@ -126,10 +126,10 @@ class ContaBancaria:
         try:
             query = """
                 UPDATE contas_bancarias
-                SET banco = %s, agencia = %s, conta = %s, tipo = %s, saldo_inicial = %s, limite = %s
+                SET banco = %s, agencia = %s, conta = %s, tipo = %s, saldo_inicial = %s, saldo_atual = %s, limite = %s
                 WHERE id = %s AND user_id = %s
             """
-            params = (banco, agencia, conta, tipo, saldo_inicial,
+            params = (banco, agencia, conta, tipo, saldo_inicial, saldo_atual,
                       limite, conta_id, user_id)
             if execute_query(query, params, commit=True):
                 return cls.get_by_id(conta_id, user_id)
@@ -152,8 +152,12 @@ class ContaBancaria:
         params = (conta_id, user_id)
         try:
             return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar esta conta bancária, pois ela possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
         except Exception as e:
-            print(f"Erro ao deletar conta bancária: {e}")
+            print(f"Erro inesperado ao deletar a conta bancária: {e}")
             raise
 
     @staticmethod

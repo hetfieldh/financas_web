@@ -8,6 +8,7 @@ class DespesaReceita:
     """
     Representa um item de despesa ou receita de um usuário no sistema.
     """
+
     def __init__(self, id, user_id, despesa_receita, tipo):
         self.id = id
         self.user_id = user_id
@@ -29,7 +30,7 @@ class DespesaReceita:
             
             UNIQUE (user_id, despesa_receita, tipo),
             
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
         );
         """
         try:
@@ -125,4 +126,12 @@ class DespesaReceita:
         """
         query = "DELETE FROM despesas_receitas WHERE id = %s AND user_id = %s"
         params = (item_id, user_id)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar esta despesa/receita, pois ela possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
+        except Exception as e:
+            print(f"Erro inesperado ao deletar despesa/receita: {e}")
+            raise

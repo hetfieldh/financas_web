@@ -34,8 +34,8 @@ class DespesaFixa:
             
             UNIQUE (user_id, despesa_receita_id, mes_ano),
             
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (despesa_receita_id) REFERENCES despesas_receitas(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+            FOREIGN KEY (despesa_receita_id) REFERENCES despesas_receitas(id) ON DELETE RESTRICT
         );
         """
         try:
@@ -146,4 +146,12 @@ class DespesaFixa:
         """
         query = "DELETE FROM despesas_fixas WHERE id = %s AND user_id = %s"
         params = (despesa_fixa_id, user_id)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar esta despesa fixa, pois ela possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
+        except Exception as e:
+            print(f"Erro inesperado ao deletar despesa fixa: {e}")
+            raise

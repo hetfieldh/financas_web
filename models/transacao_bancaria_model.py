@@ -28,7 +28,7 @@ class TransacaoBancaria:
             transacao VARCHAR(255) NOT NULL,
             tipo VARCHAR(50) NOT NULL, -- Opções: Crédito, Débito
             UNIQUE (user_id, transacao, tipo),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
         );
         """
         try:
@@ -123,4 +123,12 @@ class TransacaoBancaria:
         """
         query = "DELETE FROM transacoes_bancarias WHERE id = %s AND user_id = %s"
         params = (transacao_id, user_id)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar esta transação bancária, pois ela possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
+        except Exception as e:
+            print(f"Erro inesperado ao deletar transação bancária: {e}")
+            raise

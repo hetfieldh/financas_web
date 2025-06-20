@@ -8,6 +8,7 @@ class GrupoCrediario:
     """
     Representa um grupo de crediário de um usuário no sistema.
     """
+
     def __init__(self, id, user_id, grupo, tipo):
         self.id = id
         self.user_id = user_id
@@ -29,7 +30,7 @@ class GrupoCrediario:
             
             UNIQUE (user_id, grupo, tipo),
             
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
         );
         """
         try:
@@ -125,4 +126,12 @@ class GrupoCrediario:
         """
         query = "DELETE FROM grupos_crediario WHERE id = %s AND user_id = %s"
         params = (grupo_id, user_id)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar este grupo de crediário, pois ele possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
+        except Exception as e:
+            print(f"Erro inesperado ao deletar grupo de crediário: {e}")
+            raise

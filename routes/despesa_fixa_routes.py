@@ -167,8 +167,19 @@ def delete_despesa_fixa(despesa_fixa_id):
     """
     Deleta um item de despesa fixa. Apenas via POST para segurança.
     """
-    if DespesaFixa.delete(despesa_fixa_id, current_user.id):
-        flash('Despesa fixa deletada com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar despesa fixa.', 'danger')
+    try:
+        if DespesaFixa.delete(despesa_fixa_id, current_user.id):
+            flash('Despesa fixa deletada com sucesso!', 'success')
+        else:
+            flash('Erro ao deletar despesa fixa.', 'danger')
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar a despesa fixa ID {despesa_fixa_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar a despesa fixa: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar despesa fixa ID {despesa_fixa_id} (UserID: {current_user.id}): {e}", exc_info=True)
+
     return redirect(url_for('despesa_fixa.list_despesas_fixas'))

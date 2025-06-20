@@ -231,7 +231,6 @@ def delete_movimento(movimento_id):
         return redirect(url_for('movimento_bancario.list_movimentos'))
 
     try:
-        # AQUI FOI FEITA A MUDANÇA: Agora, apenas os argumentos esperados são passados.
         if MovimentoBancario.delete(movimento_id, current_user.id):
             flash('Movimento bancário deletado com sucesso!', 'success')
         else:

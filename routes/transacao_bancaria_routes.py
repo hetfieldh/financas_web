@@ -130,8 +130,18 @@ def delete_transacao(transacao_id):
     """
     Deleta uma transação bancária. Apenas via POST para segurança.
     """
-    if TransacaoBancaria.delete(transacao_id, current_user.id):
-        flash('Transação bancária deletada com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar transação bancária.', 'danger')
+    try:
+        if TransacaoBancaria.delete(transacao_id, current_user.id):
+            flash('Transação bancária deletada com sucesso!', 'success')
+        else:
+            flash('Erro ao deletar transação bancária.', 'danger')
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar transação bancária ID {transacao_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar o transação bancária: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar transação bancária ID {transacao_id} (UserID: {current_user.id}): {e}", exc_info=True)
     return redirect(url_for('transacao_bancaria.list_transacoes'))

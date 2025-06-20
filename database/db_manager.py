@@ -44,31 +44,36 @@ def execute_query(query, params=None, fetchone=False, fetchall=False, commit=Fal
             result = _cursor.fetchone()
         elif fetchall:
             result = _cursor.fetchall()
-        elif commit and close_internally:
-            _conn.commit()
-            result = True
 
-        return result if (fetchone or fetchall) else (_cursor.rowcount > 0 if commit else True)
+        if commit:
+            _conn.commit()
+            if not (fetchone or fetchall):
+                result = (_cursor.rowcount > 0)
+        else:
+            if not (fetchone or fetchall):
+                result = True
+
+        return result
 
     except OperationalError as e:
-        if close_internally and _conn:
+        if _conn and close_internally:
             _conn.rollback()
         print(f"Erro de operação no banco de dados: {e}")
         raise
     except UniqueViolation as e:
-        if close_internally and _conn:
+        if _conn and close_internally:
             _conn.rollback()
         print(f"Erro de violação de unicidade: {e}")
         raise ValueError(
             "Violação de unicidade de dados. Este registro já existe.") from e
     except UndefinedTable as e:
-        if close_internally and _conn:
+        if _conn and close_internally:
             _conn.rollback()
         print(f"Erro: Tabela não definida: {e}")
         raise RuntimeError(
             "Erro no esquema do banco de dados. Tabela não encontrada.") from e
     except Exception as e:
-        if close_internally and _conn:
+        if _conn and close_internally:
             _conn.rollback()
         print(f"Erro inesperado ao executar consulta: {e}")
         raise

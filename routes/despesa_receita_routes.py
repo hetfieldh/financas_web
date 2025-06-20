@@ -128,8 +128,18 @@ def delete_despesa_receita(item_id):
     """
     Deleta um item de despesa/receita. Apenas via POST para segurança.
     """
-    if DespesaReceita.delete(item_id, current_user.id):
-        flash('Item de despesa/receita deletado com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar item de despesa/receita.', 'danger')
+    try:
+        if DespesaReceita.delete(item_id, current_user.id):
+            flash('Item de despesa/receita deletado com sucesso!', 'success')
+        else:
+            flash('Erro ao deletar item de despesa/receita.', 'danger')
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar item de despesa/receita {item_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar item de despesa/receita: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar item de despesa/receita ID {item_id} (UserID: {current_user.id}): {e}", exc_info=True)
     return redirect(url_for('despesa_receita.list_despesas_receitas'))

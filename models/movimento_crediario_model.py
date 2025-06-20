@@ -51,9 +51,9 @@ class MovimentoCrediario:
             
             UNIQUE (user_id, grupo_crediario_id, crediario_id, data_compra, valor_total, num_parcelas),
             
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (grupo_crediario_id) REFERENCES grupos_crediario(id) ON DELETE CASCADE,
-            FOREIGN KEY (crediario_id) REFERENCES crediarios(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+            FOREIGN KEY (grupo_crediario_id) REFERENCES grupos_crediario(id) ON DELETE RESTRICT,
+            FOREIGN KEY (crediario_id) REFERENCES crediarios(id) ON DELETE RESTRICT,
             
             CHECK (num_parcelas >= 1 AND num_parcelas <= 360) -- Limite de 1 a 360 parcelas
         );
@@ -240,7 +240,7 @@ class MovimentoCrediario:
     def delete(cls, movimento_id, user_id):
         """
         Deleta um movimento de crediário do banco de dados.
-        As parcelas associadas serão deletadas automaticamente pelo ON DELETE CASCADE
+        As parcelas associadas serão deletadas automaticamente pelo ON DELETE RESTRICT
         definido na chave estrangeira em 'parcelas_crediario'.
         Retorna True em caso de sucesso, False caso contrário.
         """

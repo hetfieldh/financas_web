@@ -141,10 +141,21 @@ def edit_crediario(crediario_id):
 @own_crediario_required
 def delete_crediario(crediario_id):
     """
-    Deleta um item de crediário. Apenas via POST para segurança.
+    Deleta um item de crediário. Apenas via POST para segurança
     """
-    if Crediario.delete(crediario_id, current_user.id):
-        flash('Item de crediário deletado com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar item de crediário.', 'danger')
+    try:
+        if Crediario.delete(crediario_id, current_user.id):
+            flash('Item de crediário deletado com sucesso!', 'success')
+        else:
+            flash('Não foi possível deletar o item de crediário. Ele pode não existir ou você não tem permissão.', 'danger')
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar crediário ID {crediario_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar o item de crediário: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar crediário ID {crediario_id} (UserID: {current_user.id}): {e}", exc_info=True)
+
     return redirect(url_for('crediario.list_crediarios'))

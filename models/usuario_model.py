@@ -1,7 +1,7 @@
 # models/usuario_model.py
 
 from database.db_manager import execute_query
-from psycopg.errors import UniqueViolation
+from psycopg.errors import UniqueViolation, ForeignKeyViolation
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
@@ -130,4 +130,12 @@ class Usuario(UserMixin):
     def delete(cls, user_id):
         query = "DELETE FROM users WHERE id = %s"
         params = (user_id,)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar este usuário, pois ele possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
+        except Exception as e:
+            print(f"Erro inesperado ao deletar usuário: {e}")
+            raise

@@ -224,8 +224,18 @@ def delete_movimento_crediario(movimento_id):
     """
     Deleta um movimento de crediário. Apenas via POST para segurança.
     """
-    if MovimentoCrediario.delete(movimento_id, current_user.id):
-        flash('Movimento de crediário deletado com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar movimento de crediário.', 'danger')
+    try:
+        if MovimentoCrediario.delete(movimento_id, current_user.id):
+            flash('Movimento de crediário deletado com sucesso!', 'success')
+        else:
+            flash('Erro ao deletar movimento de crediário.', 'danger')
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar movimento de crediário ID {movimento_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar o movimento de crediário: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar movimento de crediário ID {movimento_id} (UserID: {current_user.id}): {e}", exc_info=True)
     return redirect(url_for('movimento_crediario.list_movimentos_crediario'))

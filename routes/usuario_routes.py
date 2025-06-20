@@ -164,8 +164,20 @@ def delete_user(user_id):
         flash('Você não pode deletar sua própria conta através desta interface.', 'warning')
         return redirect(url_for('usuario.list_users'))
 
-    if Usuario.delete(user_id):
-        flash('Usuário deletado com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar usuário.', 'danger')
+    try:
+        if Usuario.delete(user_id):
+            flash('Usuário deletado com sucesso!', 'success')
+        else:
+            flash('Erro ao deletar usuário.', 'danger')
+
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar usuário ID {user_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar o usuário: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar usuário ID {user_id} (UserID: {current_user.id}): {e}", exc_info=True)
+
     return redirect(url_for('usuario.list_users'))

@@ -7,7 +7,8 @@ from functools import wraps
 
 bp_conta_bancaria = Blueprint('conta_bancaria', __name__, url_prefix='/contas')
 
-TIPOS_CONTA = ["Corrente", "Poupança", "Digital", "Caixinha", "Investimento"]
+TIPOS_CONTA = ["Corrente", "Poupança", "Digital",
+               "Caixinha", "Investimento", "FGTS"]
 
 
 def own_account_required(f):
@@ -125,10 +126,10 @@ def edit_conta(conta_id):
                 banco=banco,
                 agencia=agencia,
                 conta=conta_num,
-                tipo=tipo,  
+                tipo=tipo,
                 saldo_inicial=saldo_inicial,
-                saldo_atual=saldo_atual, 
-                limite=limite  
+                saldo_atual=saldo_atual,
+                limite=limite
             )
             if updated_conta:
                 flash('Conta bancária atualizada com sucesso!', 'success')
@@ -153,8 +154,19 @@ def delete_conta(conta_id):
     """
     Deleta uma conta bancária. Apenas via POST para segurança.
     """
-    if ContaBancaria.delete(conta_id, current_user.id):
-        flash('Conta bancária deletada com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar conta bancária.', 'danger')
+    try:
+        if ContaBancaria.delete(conta_id, current_user.id):
+            flash('Conta bancária deletada com sucesso!', 'success')
+        else:
+            flash('Não foi possível deletar a conta bancária. Ela pode não existir ou você não tem permissão.', 'danger')
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar conta ID {conta_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar a conta bancária: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar conta bancária ID {conta_id} (UserID: {current_user.id}): {e}", exc_info=True)
+
     return redirect(url_for('conta_bancaria.list_contas'))

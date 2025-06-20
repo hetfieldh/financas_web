@@ -36,7 +36,7 @@ class Crediario:
             UNIQUE (user_id, crediario, tipo, final),
             UNIQUE (user_id, crediario, final),
             
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
         );
         """
         try:
@@ -139,4 +139,12 @@ class Crediario:
         """
         query = "DELETE FROM crediarios WHERE id = %s AND user_id = %s"
         params = (crediario_id, user_id)
-        return execute_query(query, params, commit=True)
+        try:
+            return execute_query(query, params, commit=True)
+        except ForeignKeyViolation as e:
+            raise ValueError(
+                "Não é possível deletar este crediário, pois ele possui lançamento ou vínculo com outra tabela. Remova as associações primeiro."
+            ) from e
+        except Exception as e:
+            print(f"Erro inesperado ao deletar crediário: {e}")
+            raise

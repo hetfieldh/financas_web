@@ -128,8 +128,20 @@ def delete_grupo_crediario(grupo_id):
     """
     Deleta um grupo de crediário. Apenas via POST para segurança.
     """
-    if GrupoCrediario.delete(grupo_id, current_user.id):
-        flash('Grupo de crediário deletado com sucesso!', 'success')
-    else:
-        flash('Erro ao deletar grupo de crediário.', 'danger')
+    try:
+        if GrupoCrediario.delete(grupo_id, current_user.id):
+            flash('Grupo de crediário deletado com sucesso!', 'success')
+        else:
+            flash('Erro ao deletar grupo de crediário.', 'danger')
+
+    except ValueError as e:
+        flash(f'Erro: {e}', 'danger')
+        current_app.logger.warning(
+            f"Erro de validação ao deletar grupo de crediário ID {grupo_id} (UserID: {current_user.id}): {e}")
+    except Exception as e:
+        flash(
+            f'Ocorreu um erro inesperado ao deletar o grupo de crediário: {e}', 'danger')
+        current_app.logger.error(
+            f"Erro inesperado ao deletar grupo de crediário ID {grupo_id} (UserID: {current_user.id}): {e}", exc_info=True)
+
     return redirect(url_for('grupo_crediario.list_grupos_crediario'))
