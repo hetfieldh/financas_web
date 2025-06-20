@@ -1,0 +1,74 @@
+{# templates/renda/list.html #}
+
+{% extends 'base.html' %}
+
+{% block title %}Finanças Web | Folha Pagamento{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-auto max-w-full lg:max-w-6xl">
+    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Itens de Folha de Pagamento</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div
+        class="alert alert-{{ category }} mb-4 p-3 rounded-lg text-sm
+                    {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="mb-6 text-right">
+        <a href="{{ url_for('renda.add_renda') }}"
+            class="inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-plus-circle mr-2"></i> Adicionar Itens
+        </a>
+    </div>
+
+    {% if rendas %}
+    <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Descrição</th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for renda in rendas %}
+                <tr>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ renda.id }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ renda.descricao }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ renda.tipo }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm font-medium">
+                        <a href="{{ url_for('renda.edit_renda', renda_id=renda.id) }}"
+                            class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-200">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form action="{{ url_for('renda.delete_renda', renda_id=renda.id) }}" method="POST"
+                            class="inline" onsubmit="return confirm('Tem certeza que deseja deletar esta renda?');">
+                            <button type="submit" class="text-red-600 hover:text-red-900 transition duration-200">
+                                <i class="fas fa-trash-alt"></i> Deletar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-center text-gray-600 py-8">Nenhuma renda cadastrada ainda.</p>
+    {% endif %}
+</div>
+{% endblock %}
