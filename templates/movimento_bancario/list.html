@@ -2,7 +2,7 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Finanças Web | Movimento Bancário{% endblock %}
+{% block title %}Finanças Web | MOV Bancário{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-auto max-w-full lg:max-w-6xl">
@@ -11,7 +11,7 @@
     <div class="mb-6 text-right">
         <a href="{{ url_for('movimento_bancario.add_movimento') }}"
             class="inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out transform hover:scale-105">
-            <i class="fas fa-plus-circle mr-2"></i> Adicionar Movimento
+            <i class="fas fa-plus-circle mr-2"></i> Adicionar
         </a>
     </div>
 
@@ -78,7 +78,7 @@
                             data-delete-url="{{ url_for('movimento_bancario.delete_movimento', movimento_id=movimento.id) }}"
                             onclick="confirmDelete(this.dataset.deleteUrl)"
                             class="text-red-600 hover:text-red-900 transition duration-200 cursor-pointer">
-                            <i class="fas fa-trash-alt"></i> Deletar
+                            <i class="fas fa-trash-alt"></i> Excluir
                         </button>
                         {% else %}
                         <span class="text-gray-500">N/A</span>

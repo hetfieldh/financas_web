@@ -2,16 +2,16 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Finanças Web | Movimentos de Renda{% endblock %}
+{% block title %}Finanças Web | MOV Folha{% endblock %}
 
 {% block content %}
 <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-auto max-w-full lg:max-w-7xl">
-    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Movimentos de Renda</h1>
+    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Rendimentos</h1>
 
     <div class="mb-6 text-right">
         <a href="{{ url_for('movimento_renda.add_movimento_renda') }}"
             class="inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out transform hover:scale-105">
-            <i class="fas fa-plus-circle mr-2"></i> Adicionar Movimento
+            <i class="fas fa-plus-circle mr-2"></i> Adicionar
         </a>
     </div>
 
@@ -48,10 +48,8 @@
                 {% for mov in movimentos %}
                 <tr>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.id }}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.nome_renda }}</td> {# Alterado
-                    aqui #}
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.tipo_renda }}</td> {# Alterado
-                    aqui #}
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.nome_renda }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.tipo_renda }}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.mes_ref.strftime('%m/%Y') }}
                     </td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.mes_pagto.strftime('%m/%Y') }}
@@ -67,7 +65,7 @@
                             method="POST" class="inline"
                             onsubmit="return confirm('Tem certeza que deseja deletar este movimento de renda?');">
                             <button type="submit" class="text-red-600 hover:text-red-900 transition duration-200">
-                                <i class="fas fa-trash-alt"></i> Deletar
+                                <i class="fas fa-trash-alt"></i> Excluir
                             </button>
                         </form>
                     </td>

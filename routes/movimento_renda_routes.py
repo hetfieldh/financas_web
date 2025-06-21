@@ -74,9 +74,6 @@ def add_movimento_renda():
                 raise ValueError(
                     "Todos os campos obrigatórios devem ser preenchidos.")
 
-            if valor <= 0:
-                raise ValueError("O valor da renda deve ser positivo.")
-
             MovimentoRenda.add(
                 user_id=current_user.id,
                 renda_id=renda_id,
@@ -138,9 +135,6 @@ def edit_movimento_renda(movimento_id):
             if not renda_id or not mes_ref or not mes_pagto or valor is None:
                 raise ValueError(
                     "Todos os campos obrigatórios devem ser preenchidos.")
-
-            if valor <= 0:
-                raise ValueError("O valor da renda deve ser positivo.")
 
             updated_movimento = MovimentoRenda.update(
                 movimento_id=movimento_id,

@@ -18,7 +18,7 @@ class MovimentoRenda:
         self.mes_ref = mes_ref
         self.mes_pagto = mes_pagto
         self.valor = Decimal(valor) if not isinstance(
-            valor, Decimal) else valor  # Garante que seja Decimal
+            valor, Decimal) else valor  
 
     @staticmethod
     def create_table():
