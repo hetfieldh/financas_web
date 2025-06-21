@@ -7,7 +7,7 @@ financas_web
 ├── config.py
 ├── README.md
 ├── requirements.txt
-├── run.py								
+├── run.py
 │
 ├── database/
 │   ├── __init__.py
@@ -21,7 +21,7 @@ financas_web
 │   ├── grupo_crediario_model.py
 │   ├── movimento_bancario_model.py
 │   ├── movimento_crediario_model.py
-│   ├── movimento_renda_model.py        ***NOVO
+│   ├── movimento_renda_model.py
 │   ├── parcela_crediario_model.py
 │   ├── renda_model.py
 │   ├── transacao_bancaria_model.py
@@ -37,7 +37,7 @@ financas_web
 │   ├── grupo_crediario_routes.py
 │   ├── movimento_bancario_routes.py
 │   ├── movimento_crediario_routes.py
-│   ├── movimento_renda_routes.py   ***NOVO
+│   ├── movimento_renda_routes.py
 │   ├── renda_routes.py
 │   ├── transacao_bancaria_routes.py
 │   └── usuario_routes.py
@@ -95,10 +95,10 @@ financas_web
     │   ├── add.html
     │   ├── edit.html
     │   └── list.html
-    ├── movimento_renda/    ***NOVO
-    │   ├── add.html        ***NOVO
-    │   ├── edit.html       ***NOVO
-    │   └── list.html       ***NOVO
+    ├── movimento_renda/
+    │   ├── add.html
+    │   ├── edit.html
+    │   └── list.html
     ├── renda/
     │   ├── add.html
     │   ├── edit.html
@@ -111,4 +111,3 @@ financas_web
     │   ├── add.html
     │   ├── edit.html
     │   └── list.html 
-

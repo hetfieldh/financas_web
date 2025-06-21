@@ -1,11 +1,9 @@
 # \run.py
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_login import LoginManager
 from config import Config
-from datetime import datetime
 from datetime import datetime, date
-from werkzeug.exceptions import NotFound, InternalServerError
 import logging
 
 # Importa os MODELOS
@@ -98,12 +96,19 @@ def create_app():
             current_year=datetime.now().year
         )
 
+    @app.errorhandler(404)
+    def page_not_found(e):
+        app.logger.warning(f"Erro 404 - Página não encontrada: {request.url}")
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        app.logger.error(
+            f"Erro 500 - Erro Interno do Servidor: {e}", exc_info=True)
+        return render_template('errors/500.html'), 500
+
     @app.before_request
     def before_first_request_actions():
-        """
-        Executa uma vez antes da primeira requisição.
-        Ideal para setup inicial do banco de dados.
-        """
         if not hasattr(app, '_db_initialized'):
             print("Verificando e criando tabelas no banco de dados, se necessário...")
             Usuario.create_table()
@@ -119,16 +124,6 @@ def create_app():
             Renda.create_table()
             MovimentoRenda.create_table()
             app._db_initialized = True
-            # --- REMOVIDO: Bloco de criação automática do usuário admin ---
-            # if not Usuario.get_by_login('admin'):
-            #     print("Criando usuário administrador padrão 'admin'...")
-            #     try:
-            #         Usuario.add('Administrador Padrão', 'admin@financas.com', 'admin', 'adminpass', is_admin=True)
-            #         print("Usuário 'admin' criado com sucesso (login: admin, senha: adminpass)")
-            #     except Exception as e:
-            #         print(f"Falha ao criar usuário admin padrão: {e}")
-            # --- FIM DA REMOÇÃO ---
-
     return app
 
 

@@ -72,9 +72,8 @@ class MovimentoRenda:
         if rows:
             for row in rows:
                 movimento = cls(row[0], row[1], row[2], row[3], row[4], row[5])
-                # Adiciona o nome e o tipo da renda ao objeto
                 movimento.nome_renda = row[6]
-                movimento.tipo_renda = row[7]  # Adicionamos o tipo aqui
+                movimento.tipo_renda = row[7] 
                 movimentos.append(movimento)
         return movimentos
 

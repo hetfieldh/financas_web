@@ -131,7 +131,6 @@ def edit_movimento_renda(movimento_id):
             mes_pagto = datetime.strptime(mes_pagto_str, '%Y-%m').date()
             valor = Decimal(valor_str.replace(',', '.'))
 
-            # Validação básica de campos
             if not renda_id or not mes_ref or not mes_pagto or valor is None:
                 raise ValueError(
                     "Todos os campos obrigatórios devem ser preenchidos.")
