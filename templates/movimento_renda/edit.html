@@ -1,0 +1,169 @@
+{# templates/movimento_renda/edit.html #}
+
+{% extends 'base.html' %}
+
+{% block title %}Finanças Web | Editar Movimento de Renda{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto border border-gray-200">
+    <h2 class="text-3xl font-semibold text-gray-900 mb-6 text-center">Editar Movimento de Renda</h2>
+    <form method="POST" action="{{ url_for('movimento_renda.edit_movimento_renda', movimento_id=movimento.id) }}">
+        <div class="mb-5">
+            <label for="renda_id" class="block text-gray-700 text-sm font-medium mb-2">Renda</label>
+            <select id="renda_id" name="renda_id" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+                {% for renda in rendas %}
+                <option value="{{ renda.id }}" {% if renda.id==movimento.renda_id %}selected{% endif %}>
+                    {{ renda.descricao }} ({{ renda.tipo }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-5">
+            <label for="mes_ref" class="block text-gray-700 text-sm font-medium mb-2">Mês/Ano de Referência</label>
+            <input type="month" id="mes_ref" name="mes_ref" value="{{ mes_ref_month_year }}" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+        </div>
+        <div class="mb-5">
+            <label for="mes_pagto" class="block text-gray-700 text-sm font-medium mb-2">Mês/Ano do Pagamento</label>
+            <input type="month" id="mes_pagto" name="mes_pagto" value="{{ mes_pagto_month_year }}" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200">
+        </div>
+        <div class="mb-6">
+            <label for="valor_display" class="block text-gray-700 text-sm font-medium mb-2">Valor (R$)</label>
+            {# O valor inicial é passado como float para o JavaScript formatar #}
+            <input type="text" id="valor_display" value="{{ movimento.valor | float }}" required inputmode="decimal"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Ex: 2500,00">
+            <input type="hidden" id="valor_hidden" name="valor" value="{{ movimento.valor | float }}">
+            <p id="valor-validation-message" class="text-red-500 text-xs mt-1 hidden"></p>
+        </div>
+
+        <div class="flex justify-end space-x-4">
+            <a href="{{ url_for('movimento_renda.list_movimentos_renda') }}"
+                class="inline-flex items-center px-6 py-2 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                <i class="fas fa-save mr-2"></i> Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const valorDisplayInput = document.getElementById('valor_display');
+        const valorHiddenInput = document.getElementById('valor_hidden');
+        const valorValidationMessage = document.getElementById('valor-validation-message');
+
+        // Função para formatar o valor para exibição (ex: 1234.56 -> 1.234,56)
+        function formatDisplayValue(number) {
+            if (isNaN(number)) return '';
+            // Converte para string com 2 casas decimais, depois substitui '.' por ','
+            let formatted = parseFloat(number).toFixed(2).replace('.', ',');
+            // Adiciona separador de milhares (pontos)
+            return formatted.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        // Função para parsear o valor do input (ex: 1.234,56 -> 1234.56)
+        function parseDisplayValue(valueString) {
+            if (!valueString) return NaN;
+            valueString = valueString.trim();
+            // Remove pontos de milhares e substitui vírgula decimal por ponto
+            valueString = valueString.replace(/\./g, '');
+            valueString = valueString.replace(/,/g, '.');
+            return parseFloat(valueString);
+        }
+
+        // Função para filtrar caracteres inválidos enquanto o usuário digita
+        function filterInput(inputElement) {
+            let value = inputElement.value;
+            // Permite apenas números, vírgulas, pontos e, opcionalmente, um sinal de menos no início
+            let filteredValue = value.replace(/[^0-9.,-]/g, '');
+
+            // Garante que o sinal de menos só apareça no início e apenas uma vez
+            if (filteredValue.indexOf('-') > 0) {
+                filteredValue = filteredValue.replace(/-/g, '');
+                if (value.startsWith('-')) {
+                    filteredValue = '-' + filteredValue;
+                }
+            }
+
+            // Garante apenas uma vírgula/ponto decimal
+            const decimalSeparator = filteredValue.includes(',') ? ',' : filteredValue.includes('.') ? '.' : null;
+            if (decimalSeparator) {
+                const parts = filteredValue.split(decimalSeparator);
+                if (parts.length > 2) { // Mais de um separador decimal
+                    filteredValue = parts[0] + decimalSeparator + parts.slice(1).join('');
+                }
+            }
+
+            inputElement.value = filteredValue;
+        }
+
+        // Função para validar e ajustar o valor final ao sair do campo
+        function validateAndAdjustValor() {
+            let numericValue = parseDisplayValue(valorDisplayInput.value);
+
+            valorValidationMessage.classList.add('hidden'); // Esconde a mensagem de erro
+            valorDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500'); // Remove estilo de erro
+
+            if (isNaN(numericValue) || valorDisplayInput.value.trim() === '') {
+                // Se o valor não é um número ou está vazio/apenas espaços, mostra erro se não estiver vazio
+                if (valorDisplayInput.value.trim() !== '') {
+                    valorValidationMessage.textContent = 'Por favor, insira um valor numérico válido (ex: 2.500,00).';
+                    valorValidationMessage.classList.remove('hidden');
+                    valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                }
+                valorHiddenInput.value = '0.00';
+                return;
+            }
+
+            // Validação específica para Renda: valor deve ser positivo
+            if (numericValue <= 0) {
+                valorValidationMessage.textContent = 'O valor da renda deve ser positivo.';
+                valorValidationMessage.classList.remove('hidden');
+                valorDisplayInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                // Não ajusta o valor automaticamente para forçar o usuário a corrigir
+            }
+
+            valorDisplayInput.value = formatDisplayValue(numericValue); // Formata para exibição
+            valorHiddenInput.value = numericValue.toFixed(2); // Atribui ao campo hidden para envio
+        }
+
+        // Event Listeners
+        valorDisplayInput.addEventListener('input', function () {
+            filterInput(this); // Filtra enquanto digita
+        });
+
+        valorDisplayInput.addEventListener('blur', validateAndAdjustValor); // Valida ao perder o foco
+
+        valorDisplayInput.addEventListener('focus', function () {
+            // Ao focar, remove formatação para facilitar a edição
+            const currentNumericValue = parseDisplayValue(this.value);
+            if (!isNaN(currentNumericValue)) {
+                this.value = currentNumericValue.toString();
+            } else {
+                this.value = ''; // Limpa se não for numérico
+            }
+            valorValidationMessage.classList.add('hidden'); // Esconde mensagens de erro
+            valorDisplayInput.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500'); // Remove estilos de erro
+        });
+
+        // Modificação aqui: Garante que o valor inicial seja formatado para exibição
+        // ao carregar a página, usando a função formatDisplayValue.
+        // O valor do input `valor_display` virá como um float simples (ex: 25000.0)
+        // e será formatado corretamente pelo JS.
+        const initialValue = parseFloat(valorDisplayInput.value);
+        if (!isNaN(initialValue)) {
+            valorDisplayInput.value = formatDisplayValue(initialValue);
+            valorHiddenInput.value = initialValue.toFixed(2);
+        } else {
+            valorDisplayInput.value = formatDisplayValue(0); // Garante que 0,00 seja exibido se o valor for inválido
+            valorHiddenInput.value = '0.00';
+        }
+    });
+</script>
+{% endblock %}

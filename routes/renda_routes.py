@@ -7,7 +7,8 @@ from functools import wraps
 
 bp_renda = Blueprint('renda', __name__, url_prefix='/rendas')
 
-TIPOS_RENDA = ["Provento", "Desconto", "Benefício", "Imposto", "Outro"]
+TIPOS_RENDA = ["Provento", "Desconto",
+               "Benefício", "Imposto", "Serviço", "Venda"]
 
 
 def own_renda_required(f):

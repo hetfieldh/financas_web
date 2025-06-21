@@ -1,0 +1,83 @@
+{# templates/movimento_renda/list.html #}
+
+{% extends 'base.html' %}
+
+{% block title %}Finanças Web | Movimentos de Renda{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 mx-auto max-w-full lg:max-w-7xl">
+    <h1 class="text-3xl font-semibold text-gray-900 mb-6">Movimentos de Renda</h1>
+
+    <div class="mb-6 text-right">
+        <a href="{{ url_for('movimento_renda.add_movimento_renda') }}"
+            class="inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-plus-circle mr-2"></i> Adicionar Movimento
+        </a>
+    </div>
+
+    {% if movimentos %}
+    <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item
+                        Renda
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo
+                        Renda
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mês Ref.
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mês Pgto.
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valor
+                        (R$)</th>
+                    <th scope="col"
+                        class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for mov in movimentos %}
+                <tr>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.id }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.nome_renda }}</td> {# Alterado
+                    aqui #}
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.tipo_renda }}</td> {# Alterado
+                    aqui #}
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.mes_ref.strftime('%m/%Y') }}
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ mov.mes_pagto.strftime('%m/%Y') }}
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900 text-right">R$ {{ "%.2f" |
+                        format(mov.valor | float) }}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm font-medium">
+                        <a href="{{ url_for('movimento_renda.edit_movimento_renda', movimento_id=mov.id) }}"
+                            class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-200">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form action="{{ url_for('movimento_renda.delete_movimento_renda', movimento_id=mov.id) }}"
+                            method="POST" class="inline"
+                            onsubmit="return confirm('Tem certeza que deseja deletar este movimento de renda?');">
+                            <button type="submit" class="text-red-600 hover:text-red-900 transition duration-200">
+                                <i class="fas fa-trash-alt"></i> Deletar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-center text-gray-600 py-8">Nenhum movimento de renda cadastrado ainda.</p>
+    {% endif %}
+</div>
+{% endblock %}
