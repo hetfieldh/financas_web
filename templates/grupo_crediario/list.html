@@ -37,7 +37,17 @@
                 <tr>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ grupo.id }}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ grupo.grupo }}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ grupo.tipo }}</td>
+
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {% if grupo.tipo == 'Compra' %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Compra</span>
+                        {% else %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Estorno</span>
+                        {% endif %}
+                    </td>
+
                     <td class="px-6 py-3 whitespace-nowrap text-sm font-medium">
                         <a href="{{ url_for('grupo_crediario.edit_grupo_crediario', grupo_id=grupo.id) }}"
                             class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-200">

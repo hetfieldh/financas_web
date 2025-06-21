@@ -37,7 +37,17 @@
                 <tr>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ transacao.id }}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ transacao.transacao }}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ transacao.tipo }}</td>
+                    
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {% if transacao.tipo == 'Crédito' %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Crédito</span>
+                        {% else %}
+                        <span
+                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Débito</span>
+                        {% endif %}
+                    </td>
+                    
                     <td class="px-6 py-3 whitespace-nowrap text-sm font-medium">
                         <a href="{{ url_for('transacao_bancaria.edit_transacao', transacao_id=transacao.id) }}"
                             class="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-200">
