@@ -124,6 +124,14 @@ def create_app():
             Renda.create_table()
             MovimentoRenda.create_table()
             app._db_initialized = True
+            # Bloco de criação automática do usuário admin ---
+            # if not Usuario.get_by_login('admin'):
+            #     print("Criando usuário administrador padrão 'admin'...")
+            #     try:
+            #         Usuario.add('Administrador Padrão', 'admin@financas.com', 'admin', 'adminpass', is_admin=True)
+            #         print("Usuário 'admin' criado com sucesso (login: admin, senha: adminpass)")
+            #     except Exception as e:
+            #         print(f"Falha ao criar usuário admin padrão: {e}")
     return app
 
 

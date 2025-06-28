@@ -1,6 +1,6 @@
 flask
 flask_login
 werkzeug
-psycopg
+psycopg[binary]
 python-dotenv
 python-dateutil
